@@ -52,17 +52,18 @@ graph TB
 
 ### API Gateway
 
-**Endpoints:**
-- `GET /prices` - Retrieve current prices for specified cryptocurrencies
-- `GET /prices/{symbol}` - Retrieve price for a single cryptocurrency
-- `GET /health` - Health check endpoint
+**エンドポイント:**
+- `GET /prices` - 指定された暗号通貨の現在価格を取得
+- `GET /prices/{symbol}` - 単一の暗号通貨の価格を取得
+- `GET /health` - ヘルスチェックエンドポイント（認証不要）
 
-**Request/Response Format:**
+**リクエスト/レスポンス形式:**
 
 ```typescript
 // GET /prices?symbols=BTC,ETH,ADA
 Request Headers:
   X-API-Key: string
+  Accept-Encoding: gzip (optional)
 
 Response (200 OK):
 {
@@ -90,6 +91,30 @@ Response (429 Too Many Requests):
   "error": "Rate limit exceeded",
   "code": "RATE_LIMIT_EXCEEDED",
   "retryAfter": 60
+}
+
+// GET /health
+Response (200 OK):
+{
+  "status": "healthy",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "checks": {
+    "dynamodb": "ok",
+    "lastPriceUpdate": "2024-01-15T10:25:00Z",
+    "cacheAge": 300
+  }
+}
+
+Response (503 Service Unavailable):
+{
+  "status": "unhealthy",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "checks": {
+    "dynamodb": "error",
+    "lastPriceUpdate": "2024-01-15T09:00:00Z",
+    "cacheAge": 5400
+  },
+  "error": "DynamoDB connection failed"
 }
 ```
 
@@ -434,6 +459,69 @@ The testing strategy follows an implementation-first approach:
 
 This approach ensures that tests validate real functionality rather than mocked behavior, providing confidence in the actual implementation.
 
+### Testing Policy
+
+**テスト作成の最小ルール:**
+
+このプロジェクトでは、以下のテストポリシーに従います：
+
+1. **実装完了の定義**
+   - 機能実装が完了しても、対応するテストが書かれるまでは「完了」とみなさない
+   - すべてのプルリクエストは、新規コードに対するテストを含む必要がある
+
+2. **テスト作成のタイミング**
+   - **ユニットテスト**: 各関数/メソッドの実装直後に作成
+   - **プロパティテスト**: コンポーネント全体の実装完了後に作成
+   - **統合テスト**: 複数コンポーネントの統合完了後に作成
+
+3. **テスト作成順序ガイドライン**
+   ```
+   実装タスク完了
+   ↓
+   ユニットテスト作成（エッジケース、エラーケース）
+   ↓
+   プロパティテスト作成（設計書のプロパティに対応）
+   ↓
+   ローカルでテスト実行・修正
+   ↓
+   統合テスト作成（該当する場合）
+   ↓
+   コミット・プッシュ
+   ```
+
+4. **テストカバレッジ目標**
+   - ユニットテスト: 最低80%のコードカバレッジ
+   - プロパティテスト: 設計書の全プロパティをカバー
+   - 統合テスト: 主要なユーザーフローをカバー
+
+5. **テスト実行タイミング**
+   - **ローカル**: コミット前に全テストを実行
+   - **CI/CD**: プッシュ時に自動実行
+   - **デプロイ前**: 全テストが合格していることを確認
+
+6. **テストの命名規則**
+   - ユニットテスト: `test_<function_name>_<scenario>`
+   - プロパティテスト: `test_property_<number>_<description>` + コメントで設計書参照
+   - 統合テスト: `test_integration_<flow_name>`
+
+7. **テスト失敗時の対応**
+   - テストが失敗した場合、実装を修正してテストを合格させる
+   - テストが不適切な場合のみ、テストを修正する
+   - テストをスキップ/無効化することは原則禁止
+
+**例: タスク完了チェックリスト**
+```
+タスク7: API Lambda関数の実装
+□ Lambda handler実装
+□ リクエスト解析ロジック実装
+□ レスポンスフォーマット実装
+□ ユニットテスト作成（7.2）
+□ プロパティテスト作成（7.1）
+□ すべてのテストが合格
+□ コードレビュー完了
+✓ タスク完了
+```
+
 ## Deployment Architecture
 
 ### Infrastructure as Code
@@ -453,21 +541,137 @@ Parameters:
     Type: String
     NoEcho: true
 
+Globals:
+  Function:
+    Runtime: python3.11
+    Timeout: 25
+    MemorySize: 512
+    Environment:
+      Variables:
+        DYNAMODB_TABLE_NAME: !Ref CryptoWatchTable
+        ENVIRONMENT: !Ref Environment
+
 Resources:
+  # DynamoDB Table
   CryptoWatchTable:
     Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: PK
+          AttributeType: S
+        - AttributeName: SK
+          AttributeType: S
+      KeySchema:
+        - AttributeName: PK
+          KeyType: HASH
+        - AttributeName: SK
+          KeyType: RANGE
+      TimeToLiveSpecification:
+        Enabled: true
+        AttributeName: ttl
     
+  # API Lambda Function with CodeDeploy
   ApiFunction:
     Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/api/
+      Handler: handler.lambda_handler
+      AutoPublishAlias: live
+      DeploymentPreference:
+        Type: Linear10PercentEvery1Minute
+        Alarms:
+          - !Ref LambdaErrorAlarm
+          - !Ref ApiGateway5xxAlarm
+          - !Ref LambdaThrottleAlarm
+      Events:
+        GetPrices:
+          Type: Api
+          Properties:
+            Path: /prices
+            Method: get
+        GetPriceBySymbol:
+          Type: Api
+          Properties:
+            Path: /prices/{symbol}
+            Method: get
+        HealthCheck:
+          Type: Api
+          Properties:
+            Path: /health
+            Method: get
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref CryptoWatchTable
     
+  # Price Update Lambda Function
   PriceUpdateFunction:
     Type: AWS::Serverless::Function
-    
-  ApiGateway:
-    Type: AWS::Serverless::Api
-    
-  UpdateSchedule:
-    Type: AWS::Events::Rule
+    Properties:
+      CodeUri: src/update/
+      Handler: handler.lambda_handler
+      Environment:
+        Variables:
+          EXTERNAL_API_KEY: !Ref ExternalApiKey
+      Events:
+        ScheduledUpdate:
+          Type: Schedule
+          Properties:
+            Schedule: rate(5 minutes)
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CryptoWatchTable
+  
+  # CloudWatch Alarms for Auto-Rollback
+  LambdaErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Lambda error rate exceeds threshold
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 2
+      Threshold: 5
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref ApiFunction
+  
+  ApiGateway5xxAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: API Gateway 5xx error rate exceeds threshold
+      MetricName: 5XXError
+      Namespace: AWS/ApiGateway
+      Statistic: Average
+      Period: 60
+      EvaluationPeriods: 2
+      Threshold: 0.1  # 10%
+      ComparisonOperator: GreaterThanThreshold
+  
+  LambdaThrottleAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Lambda throttle count exceeds threshold
+      MetricName: Throttles
+      Namespace: AWS/Lambda
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 10
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref ApiFunction
+
+Outputs:
+  ApiEndpoint:
+    Description: API Gateway endpoint URL
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+  ApiFunctionArn:
+    Description: API Lambda Function ARN
+    Value: !GetAtt ApiFunction.Arn
 ```
 
 ### Environment Configuration
@@ -491,15 +695,164 @@ Resources:
 - Rate limit: 100 requests/minute
 - CloudWatch alarms enabled
 
+### CI/CD Pipeline
+
+**採用技術: GitHub Actions**
+
+GitHub Actionsを主要なCI/CDツールとして採用します。理由：
+- リポジトリとセットで管理しやすい
+- YAMLでワークフローをコードとして管理
+- AWS以外のサービスとの連携も柔軟
+- デプロイはGitHub ActionsからAWS SAM/CloudFormationを呼び出す形
+
+**パイプライン構成:**
+
+```yaml
+# .github/workflows/deploy.yml の概要
+name: Deploy Backend
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - Checkout code
+      - Setup Python 3.11
+      - Install dependencies
+      - Run unit tests (pytest)
+      - Run property-based tests (hypothesis)
+      - Run linting (flake8, black)
+      - Run type checking (mypy)
+      - Generate coverage report
+      - Upload coverage to Codecov
+    
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - Checkout code
+      - Setup Python and AWS SAM CLI
+      - SAM build
+      - SAM package
+      - Upload artifacts to S3
+    
+  deploy-dev:
+    needs: build
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    steps:
+      - Download artifacts
+      - SAM deploy to dev environment
+      - Run smoke tests
+      - Notify Slack on failure
+    
+  deploy-staging:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - Download artifacts
+      - SAM deploy to staging environment
+      - Run integration tests
+      - Run load tests (optional)
+      - Notify team for approval
+    
+  deploy-prod:
+    needs: deploy-staging
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production  # Manual approval required
+    steps:
+      - Download artifacts
+      - SAM deploy to production with CodeDeploy
+      - Configure traffic shifting (Linear10PercentEvery1Minute)
+      - CloudWatch Alarms monitor deployment
+      - Automatic rollback on alarm trigger
+      - Notify Slack on success/failure
+```
+
+**代替案（参考）:**
+AWS CodePipelineも選択肢として利用可能ですが、本プロジェクトではGitHub Actionsを採用します。
+- CodeCommit/GitHub連携
+- CodeBuild for tests and build
+- CodeDeploy for Lambda deployment
+- CloudWatch Alarms for health checks
+
 ### Deployment Process
 
-1. Code changes pushed to repository
-2. CI/CD pipeline runs tests
-3. SAM build creates deployment package
-4. SAM deploy updates CloudFormation stack
-5. CloudFormation performs rolling update of Lambda functions
-6. Health check validates deployment
-7. Rollback triggered if health check fails
+**開発環境へのデプロイ（自動）:**
+1. コード変更をdevelopブランチにプッシュ
+2. GitHub Actionsがトリガーされる
+3. テストジョブ: ユニットテスト、プロパティテスト、リント、型チェック
+4. ビルドジョブ: SAM buildでデプロイパッケージを作成
+5. デプロイジョブ: SAM deployで開発環境のCloudFormationスタックを更新
+6. スモークテストが基本的な機能を検証
+7. 失敗時はSlack通知
+
+**ステージング環境へのデプロイ（自動）:**
+1. コード変更をmainブランチにマージ
+2. GitHub Actionsが全テストを実行
+3. ビルド成功後、ステージング環境にデプロイ
+4. 統合テストとロードテストを実行
+5. テスト結果をレビュー
+6. 本番デプロイの承認待ち状態に
+
+**本番環境へのデプロイ（手動承認 + 自動ロールバック）:**
+
+**フェーズ1: 承認とデプロイ開始**
+1. ステージング環境での検証完了後、GitHub Actionsの`production`環境で手動承認
+2. 承認後、SAM deployがCodeDeployを使用してデプロイを開始
+3. SAMテンプレートでCodeDeployの設定を指定:
+   ```yaml
+   DeploymentPreference:
+     Type: Linear10PercentEvery1Minute
+     Alarms:
+       - !Ref LambdaErrorAlarm
+       - !Ref ApiGateway5xxAlarm
+       - !Ref LambdaThrottleAlarm
+   ```
+
+**フェーズ2: トラフィックシフト**
+1. CodeDeployが新バージョンのLambda関数をデプロイ
+2. Lambda Aliasを使用してトラフィックを段階的にシフト:
+   - 0分: 10%のトラフィックを新バージョンに
+   - 1分: 20%のトラフィックを新バージョンに
+   - ...
+   - 9分: 100%のトラフィックを新バージョンに
+3. 各ステップでCloudWatch Alarmsを監視
+
+**フェーズ3: 監視と自動ロールバック**
+- CloudWatch Alarmsが以下のメトリクスを監視:
+  - Lambda Errors（エラー数）
+  - Lambda Throttles（スロットル数）
+  - API Gateway 5xx responses（5xxレスポンス率）
+  - オプション: p95/p99レイテンシ
+
+**自動ロールバックトリガー:**
+- **Lambda error rate > 5%** for 2 consecutive minutes
+- **API Gateway 5xx rate > 10%** for 2 consecutive minutes
+- **Lambda throttle count > 10** in 1 minute
+- **ヘルスチェックエンドポイントが503を返す** (optional)
+
+**ロールバック実行:**
+1. CloudWatch AlarmがALARM状態に遷移
+2. CodeDeployが自動的にロールバックを開始
+3. Lambda Aliasを即座に前バージョンに切り替え（100%のトラフィック）
+4. CloudFormation stackは変更を保持（次回デプロイで修正）
+5. SNS経由でSlack/Email通知を送信
+6. GitHub Actionsジョブが失敗として記録
+7. インシデントレポートを自動生成（ログ、メトリクス、タイムラインを含む）
+
+**ロールバック後の対応:**
+1. 問題の原因を調査（CloudWatch Logs、X-Ray traces）
+2. 修正をdevelopブランチで実装・テスト
+3. ステージング環境で検証
+4. 再度本番デプロイを試行
 
 ### Monitoring and Observability
 
@@ -564,10 +917,45 @@ Rate limiting prevents abuse and controls costs:
 
 ### Response Optimization
 
-- Minimal JSON response structure (no unnecessary fields)
-- Numeric values rounded to 2 decimal places for price, percentage
-- Timestamps in ISO 8601 format for universal compatibility
-- Optional gzip compression for clients that support it
+スマートウォッチの制約（限られた帯域幅、バッテリー消費）に対応するため、レスポンスペイロードを最適化します。
+
+**設計方針:**
+- **JSONキー名は可読性重視**: `symbol`, `price`, `change24h` など人間が読めるキー名を維持
+- **スキーマ簡素化と圧縮で最適化**: 不要フィールドの排除、数値精度制限、gzip圧縮で対応
+
+**ペイロード削減戦略:**
+
+1. **不要フィールドの排除**
+   - スマートウォッチに表示されない情報は含めない
+   - 必須フィールドのみ: `symbol`, `name`, `price`, `change24h`, `marketCap`, `lastUpdated`
+   - デバッグ情報、メタデータ、詳細説明などは除外
+
+2. **数値精度の制限**
+   - 価格: 小数点以下2桁（例: 45000.50）
+   - 変動率: 小数点以下1桁（例: 2.5）
+   - 時価総額: 整数値（例: 850000000000）
+   - 過度な精度は不要であり、データサイズを増やすだけ
+
+3. **タイムスタンプ形式**
+   - ISO 8601形式を使用（例: "2024-01-15T10:30:00Z"）
+   - ミリ秒は省略（秒単位で十分）
+
+4. **圧縮**
+   - `Accept-Encoding: gzip` ヘッダーが存在する場合、gzip圧縮を適用
+   - 圧縮により約60-70%のサイズ削減を期待
+   - `Content-Encoding: gzip` ヘッダーを付与
+   - JSONの繰り返し構造は圧縮効率が高い
+
+**レスポンスサイズ例:**
+- 単一暗号通貨（非圧縮）: 約150バイト
+- 単一暗号通貨（gzip圧縮）: 約50-60バイト
+- 10暗号通貨（非圧縮）: 約1.2KB
+- 10暗号通貨（gzip圧縮）: 約400-500バイト
+
+**JSONキー短縮を採用しない理由:**
+- フィールド数が限定的（6フィールド）であり、キー名短縮の効果は小さい
+- 可読性の低下によるデバッグ困難さのデメリットが大きい
+- gzip圧縮により、繰り返されるキー名は効率的に圧縮される
 
 ### Lambda Optimization
 

@@ -13,6 +13,12 @@ crypto-watch-backendは、Flutterスマートウォッチアプリケーショ�
 - **DynamoDB**: 暗号通貨データを保存するAWS NoSQLデータベースサービス
 - **Smartwatch Client（スマートウォッチクライアント）**: バックエンドAPIを利用するスマートウォッチデバイス上で動作するFlutterアプリケーション
 - **Price Update（価格更新）**: 外部ソースから現在の暗号通貨価格を取得し、DynamoDBに保存するプロセス
+- **CI/CD Pipeline（CI/CDパイプライン）**: コードの変更を自動的にテスト、ビルド、デプロイするための自動化されたワークフロー
+- **Zero-Downtime Deployment（ゼロダウンタイムデプロイ）**: サービスを停止せずに新しいバージョンをデプロイする手法
+- **Rollback（ロールバック）**: デプロイに問題が発生した場合に前のバージョンに戻す操作
+- **Health Check（ヘルスチェック）**: システムの健全性を確認するためのエンドポイントまたはプロセス
+- **Payload Optimization（ペイロード最適化）**: データ転送量を削減するためにレスポンスサイズを最小化する手法
+- **Traffic Shifting（トラフィックシフト）**: 新しいバージョンへのトラフィックを段階的に移行する手法
 
 ## 要件
 
@@ -36,9 +42,9 @@ crypto-watch-backendは、Flutterスマートウォッチアプリケーショ�
 
 1. WHEN Smartwatch Clientが価格データをリクエストする THEN Backend Serviceはデータが5分未満の場合、キャッシュされたデータを返す
 2. WHEN キャッシュされたデータが5分より古い THEN Backend Serviceは外部ソースから新しいデータを取得し、キャッシュを更新する
-3. THE Backend Serviceはデータ転送とバッテリー消費を削減するためにレスポンスペイロードサイズを最小化する
+3. THE Backend Serviceはスマートウォッチ向けに最適化されたレスポンスペイロードを返す（不要フィールドの排除、数値精度の制限、オプションでJSONキーの短縮）
 4. WHEN Backend Serviceが価格データを更新する THEN Backend Serviceはキャッシュ無効化のためのタイムスタンプを保存する
-5. THE Backend Serviceはクライアントが圧縮をサポートしている場合、レスポンスデータを圧縮する
+5. WHEN クライアントがAccept-Encodingヘッダーでgzip圧縮をサポートする THEN Backend Serviceはレスポンスデータをgzip圧縮して返す
 
 ### 要件3
 
@@ -95,7 +101,9 @@ crypto-watch-backendは、Flutterスマートウォッチアプリケーショ�
 #### 受入基準
 
 1. THE Backend ServiceはAWS SAMまたはCDKを使用したInfrastructure as Codeで定義される
-2. WHEN インフラストラクチャの変更が行われる THEN Backend ServiceはCI/CDパイプラインを通じた自動デプロイをサポートする
+2. THE Backend ServiceはGitHub ActionsまたはAWS CodePipelineを使用したCI/CDパイプラインを通じた自動デプロイをサポートする
 3. THE Backend Serviceは開発、ステージング、本番を含む複数のデプロイ環境をサポートする
 4. WHEN 更新をデプロイする THEN Backend Serviceはゼロダウンタイムデプロイを実行する
-5. THE Backend Serviceは失敗したデプロイのためのロールバック機能を含む
+5. WHEN デプロイ後のヘルスチェックが失敗する THEN Backend Serviceは自動的に前のバージョンにロールバックする
+6. THE Backend Serviceはステージング環境での検証後に本番環境へ昇格するワークフローを提供する
+7. THE Backend Serviceはデプロイプロセスとロールバック手順を文書化する
