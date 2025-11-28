@@ -1,0 +1,21 @@
+{
+  "resource": "/prices",
+  "path": "/prices",
+  "httpMethod": "GET",
+  "headers": {
+    "Accept": "application/json",
+    "Accept-Encoding": "gzip, deflate",
+    "X-Api-Key": "test-api-key-123"
+  },
+  "queryStringParameters": {
+    "symbols": "BTC,ETH"
+  },
+  "requestContext": {
+    "requestId": "test-request-id-123",
+    "stage": "dev",
+    "requestTime": "15/Jan/2024:10:30:00 +0000",
+    "requestTimeEpoch": 1705318200000
+  },
+  "body": null,
+  "isBase64Encoded": false
+}

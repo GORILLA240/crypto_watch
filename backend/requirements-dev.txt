@@ -1,0 +1,30 @@
+# Development and Testing Dependencies
+
+# Testing frameworks
+pytest==7.4.3
+pytest-cov==4.1.0
+pytest-mock==3.12.0
+hypothesis==6.92.1
+
+# Code quality
+black==23.12.1
+flake8==7.0.0
+mypy==1.7.1
+pylint==3.0.3
+
+# AWS and deployment
+boto3==1.34.10
+botocore==1.34.10
+aws-sam-cli==1.105.0
+moto==4.2.11  # AWS service mocking for tests
+
+# HTTP and API testing
+requests==2.31.0
+requests-mock==1.11.0
+
+# Type stubs
+boto3-stubs[dynamodb,lambda,apigateway,logs,cloudwatch]==1.34.10
+types-requests==2.31.0.10
+
+# Utilities
+python-dotenv==1.0.0
