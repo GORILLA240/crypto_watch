@@ -118,100 +118,100 @@ Response (503 Service Unavailable):
 }
 ```
 
-### API Lambda Function
+### API Lambda関数
 
-**Responsibilities:**
-- Validate API keys
-- Enforce rate limiting
-- Retrieve cryptocurrency data from DynamoDB
-- Format responses for smartwatch clients
-- Handle errors gracefully
+**責務:**
+- APIキーの検証
+- レート制限の実施
+- DynamoDBから暗号通貨データを取得
+- スマートウォッチクライアント向けのレスポンスフォーマット
+- エラーの適切な処理
 
-**Environment Variables:**
-- `DYNAMODB_TABLE_NAME` - Name of the DynamoDB table
-- `RATE_LIMIT_PER_MINUTE` - Maximum requests per minute (default: 100)
-- `CACHE_TTL_SECONDS` - Cache time-to-live (default: 300)
+**環境変数:**
+- `DYNAMODB_TABLE_NAME` - DynamoDBテーブル名
+- `RATE_LIMIT_PER_MINUTE` - 毎分の最大リクエスト数（デフォルト: 100）
+- `CACHE_TTL_SECONDS` - キャッシュの有効期間（デフォルト: 300）
 
-**Handler Signature:**
+**ハンドラーシグネチャ:**
 ```python
 def lambda_handler(event: dict, context: LambdaContext) -> dict:
     """
-    Handles API Gateway requests for cryptocurrency prices.
+    暗号通貨価格のAPI Gatewayリクエストを処理します。
     
     Args:
-        event: API Gateway event containing request details
-        context: Lambda execution context
+        event: リクエスト詳細を含むAPI Gatewayイベント
+        context: Lambda実行コンテキスト
         
     Returns:
-        API Gateway response with status code, headers, and body
+        ステータスコード、ヘッダー、ボディを含むAPI Gatewayレスポンス
     """
 ```
 
-### Price Update Lambda Function
+### Price Update Lambda関数
 
-**Responsibilities:**
-- Fetch current cryptocurrency prices from external API
-- Transform data into internal format
-- Update DynamoDB with new prices
-- Implement retry logic with exponential backoff
-- Log metrics and errors
+**責務:**
+- 外部APIから現在の暗号通貨価格を取得
+- データを内部形式に変換
+- 新しい価格でDynamoDBを更新
+- 指数バックオフを使用したリトライロジックの実装
+- メトリクスとエラーのログ記録
 
-**Environment Variables:**
-- `DYNAMODB_TABLE_NAME` - Name of the DynamoDB table
-- `EXTERNAL_API_URL` - URL of external crypto price API
-- `EXTERNAL_API_KEY` - API key for external service
-- `SUPPORTED_SYMBOLS` - Comma-separated list of cryptocurrency symbols
+**環境変数:**
+- `DYNAMODB_TABLE_NAME` - DynamoDBテーブル名
+- `EXTERNAL_API_URL` - 外部暗号通貨価格APIのURL
+- `EXTERNAL_API_KEY` - 外部サービスのAPIキー
+- `SUPPORTED_SYMBOLS` - カンマ区切りの暗号通貨シンボルリスト
 
-**Handler Signature:**
+**ハンドラーシグネチャ:**
 ```python
 def lambda_handler(event: dict, context: LambdaContext) -> dict:
     """
-    Fetches and updates cryptocurrency prices from external API.
+    外部APIから暗号通貨価格を取得して更新します。
     
     Args:
-        event: EventBridge scheduled event
-        context: Lambda execution context
+        event: EventBridgeスケジュールイベント
+        context: Lambda実行コンテキスト
         
     Returns:
-        Status information about the update operation
+        更新操作のステータス情報
     """
 ```
 
-### EventBridge Scheduler
+### EventBridgeスケジューラー
 
-**Configuration:**
-- Schedule: `rate(5 minutes)`
-- Target: Price Update Lambda Function
-- Retry Policy: 2 retries with exponential backoff
+**設定:**
+- スケジュール: `rate(5 minutes)`
+- ターゲット: Price Update Lambda関数
+- リトライポリシー: 指数バックオフで2回リトライ
 
-## Data Models
+## データモデル
 
-### DynamoDB Table Design
+### DynamoDBテーブル設計
 
-**Table Name:** `crypto-watch-data`
+**テーブル名:** `crypto-watch-data`
 
-**Primary Key:**
-- Partition Key: `PK` (String)
-- Sort Key: `SK` (String)
+**プライマリキー:**
+- パーティションキー: `PK` (String)
+- ソートキー: `SK` (String)
 
-**Global Secondary Index (GSI):**
-- GSI Name: `GSI1`
-- Partition Key: `GSI1PK` (String)
-- Sort Key: `GSI1SK` (String)
+**グローバルセカンダリインデックス (GSI):**
+- GSI名: `GSI1`
+- パーティションキー: `GSI1PK` (String)
+- ソートキー: `GSI1SK` (String)
 
-**Access Patterns:**
+**アクセスパターン:**
 
-| Access Pattern | Key Condition |
+| アクセスパターン | キー条件 |
 |----------------|---------------|
-| Get price by symbol | PK = `PRICE#{symbol}`, SK = `METADATA` |
-| Get all prices | PK begins_with `PRICE#` |
-| Check rate limit | PK = `APIKEY#{key}`, SK = `RATELIMIT#{minute}` |
-| Get API key details | PK = `APIKEY#{key}`, SK = `METADATA` |
+| シンボルで価格を取得 | PK = `PRICE#{symbol}`, SK = `METADATA` |
+| すべての価格を取得 | PK begins_with `PRICE#` |
+| レート制限をチェック | PK = `APIKEY#{key}`, SK = `RATELIMIT#{minute}` |
+| APIキー詳細を取得 | PK = `APIKEY#{key}`, SK = `METADATA` |
 
-**Item Types:**
+**アイテムタイプ:**
 
 ```typescript
-// Price Data Item
+// 価格データアイテム
 {
   "PK": "PRICE#BTC",
   "SK": "METADATA",
@@ -221,10 +221,10 @@ def lambda_handler(event: dict, context: LambdaContext) -> dict:
   "change24h": 2.5,
   "marketCap": 850000000000,
   "lastUpdated": "2024-01-15T10:30:00Z",
-  "ttl": 1705318200  // Unix timestamp for item expiration
+  "ttl": 1705318200  // アイテム有効期限のUnixタイムスタンプ
 }
 
-// API Key Item
+// APIキーアイテム
 {
   "PK": "APIKEY#abc123",
   "SK": "METADATA",
@@ -234,20 +234,20 @@ def lambda_handler(event: dict, context: LambdaContext) -> dict:
   "enabled": true
 }
 
-// Rate Limit Item
+// レート制限アイテム
 {
   "PK": "APIKEY#abc123",
-  "SK": "RATELIMIT#202401151030",  // minute-level granularity
+  "SK": "RATELIMIT#202401151030",  // 分単位の粒度
   "requestCount": 45,
-  "ttl": 1705318260  // Expires after 1 hour
+  "ttl": 1705318260  // 1時間後に期限切れ
 }
 ```
 
-### External API Integration
+### 外部API統合
 
-**Provider:** CoinGecko API (or similar)
+**プロバイダー:** CoinGecko API（または類似サービス）
 
-**Request Format:**
+**リクエスト形式:**
 ```
 GET https://api.coingecko.com/api/v3/simple/price
   ?ids=bitcoin,ethereum,cardano
@@ -256,9 +256,9 @@ GET https://api.coingecko.com/api/v3/simple/price
   &include_24hr_change=true
 ```
 
-**Response Transformation:**
+**レスポンス変換:**
 ```python
-# External API response
+# 外部APIレスポンス
 {
   "bitcoin": {
     "usd": 45000.50,
@@ -267,7 +267,7 @@ GET https://api.coingecko.com/api/v3/simple/price
   }
 }
 
-# Transformed to internal format
+# 内部形式に変換
 {
   "symbol": "BTC",
   "name": "Bitcoin",
@@ -278,186 +278,186 @@ GET https://api.coingecko.com/api/v3/simple/price
 }
 ```
 
-## Correctness Properties
+## 正確性プロパティ
 
-*A property is a characteristic or behavior that should hold true across all valid executions of a system—essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
+*プロパティとは、システムのすべての有効な実行において真であるべき特性または動作です。本質的には、システムが何をすべきかについての形式的な記述です。プロパティは、人間が読める仕様と機械で検証可能な正確性保証との橋渡しとなります。*
 
-### Property 1: Complete response data structure
-*For any* valid cryptocurrency price data, the formatted API response should include symbol, name, price, 24-hour percentage change, market cap, and lastUpdated timestamp for each requested cryptocurrency.
-**Validates: Requirements 1.2, 1.3**
+### プロパティ1: 完全なレスポンスデータ構造
+*任意の*有効な暗号通貨価格データに対して、フォーマットされたAPIレスポンスは、リクエストされた各暗号通貨のシンボル、名前、価格、24時間変動率、時価総額、lastUpdatedタイムスタンプを含む必要があります。
+**検証: 要件 1.2, 1.3**
 
-### Property 2: Cache freshness determines data source
-*For any* price data request, if cached data exists with a timestamp less than 5 minutes old, the system should return cached data without fetching from external API.
-**Validates: Requirements 2.1**
+### プロパティ2: キャッシュ鮮度がデータソースを決定
+*任意の*価格データリクエストに対して、5分未満のタイムスタンプを持つキャッシュデータが存在する場合、システムは外部APIから取得せずにキャッシュデータを返す必要があります。
+**検証: 要件 2.1**
 
-### Property 3: Cache invalidation triggers refresh
-*For any* price data request, if cached data is older than 5 minutes or does not exist, the system should fetch fresh data from the external API.
-**Validates: Requirements 2.2**
+### プロパティ3: キャッシュ無効化がリフレッシュをトリガー
+*任意の*価格データリクエストに対して、キャッシュデータが5分より古いか存在しない場合、システムは外部APIから新しいデータを取得する必要があります。
+**検証: 要件 2.2**
 
-### Property 4: Timestamp persistence
-*For any* price update operation, the data stored in DynamoDB should include a lastUpdated timestamp and a TTL value.
-**Validates: Requirements 2.4, 3.2**
+### プロパティ4: タイムスタンプ永続化
+*任意の*価格更新操作に対して、DynamoDBに保存されるデータはlastUpdatedタイムスタンプとTTL値を含む必要があります。
+**検証: 要件 2.4, 3.2**
 
-### Property 5: Response compression
-*For any* API request that includes Accept-Encoding headers indicating compression support, the response should be compressed accordingly.
-**Validates: Requirements 2.5**
+### プロパティ5: レスポンス圧縮
+*任意の*圧縮サポートを示すAccept-Encodingヘッダーを含むAPIリクエストに対して、レスポンスは適切に圧縮される必要があります。
+**検証: 要件 2.5**
 
-### Property 6: Retry with exponential backoff
-*For any* external API call that fails, the system should retry up to 3 times with exponential backoff delays between attempts.
-**Validates: Requirements 3.3**
+### プロパティ6: 指数バックオフでのリトライ
+*任意の*失敗した外部API呼び出しに対して、システムは試行間に指数バックオフ遅延を設けて最大3回リトライする必要があります。
+**検証: 要件 3.3**
 
-### Property 7: Retry exhaustion handling
-*For any* external API call where all retry attempts fail, the system should log the error and attempt to serve cached data if available.
-**Validates: Requirements 3.4**
+### プロパティ7: リトライ枯渇処理
+*任意の*すべてのリトライ試行が失敗した外部API呼び出しに対して、システムはエラーをログに記録し、利用可能な場合はキャッシュデータの提供を試みる必要があります。
+**検証: 要件 3.4**
 
-### Property 8: Update timestamp tracking
-*For any* successful price update operation, the system should record the timestamp of the successful update for monitoring purposes.
-**Validates: Requirements 3.5**
+### プロパティ8: 更新タイムスタンプ追跡
+*任意の*成功した価格更新操作に対して、システムは監視目的で成功した更新のタイムスタンプを記録する必要があります。
+**検証: 要件 3.5**
 
-### Property 9: Authentication requirement
-*For any* API endpoint request (except health check), the system should validate the presence and validity of an API key before processing the request.
-**Validates: Requirements 4.1**
+### プロパティ9: 認証要件
+*任意の*APIエンドポイントリクエスト（ヘルスチェックを除く）に対して、システムはリクエストを処理する前にAPIキーの存在と有効性を検証する必要があります。
+**検証: 要件 4.1**
 
-### Property 10: Rate limit enforcement
-*For any* API key, after 100 requests within a 60-second window, subsequent requests should be rejected until the window resets.
-**Validates: Requirements 4.3**
+### プロパティ10: レート制限実施
+*任意の*APIキーに対して、60秒のウィンドウ内で100リクエスト後、ウィンドウがリセットされるまで後続のリクエストは拒否される必要があります。
+**検証: 要件 4.3**
 
-### Property 11: Request logging
-*For any* API request received, the system should create a log entry containing request details, timestamp, and API key identifier.
-**Validates: Requirements 4.5**
+### プロパティ11: リクエストログ記録
+*任意の*受信したAPIリクエストに対して、システムはリクエスト詳細、タイムスタンプ、APIキー識別子を含むログエントリを作成する必要があります。
+**検証: 要件 4.5**
 
-### Property 12: Error logging with details
-*For any* error that occurs during request processing, the system should log detailed error information including error type, message, and stack trace.
-**Validates: Requirements 5.2**
+### プロパティ12: 詳細付きエラーログ記録
+*任意の*リクエスト処理中に発生したエラーに対して、システムはエラータイプ、メッセージ、スタックトレースを含む詳細なエラー情報をログに記録する必要があります。
+**検証: 要件 5.2**
 
-### Property 13: DynamoDB retry logic
-*For any* DynamoDB operation that fails with a transient error, the system should retry the operation, and for permanent failures, should return an appropriate error response.
-**Validates: Requirements 6.3**
+### プロパティ13: DynamoDBリトライロジック
+*任意の*一時的なエラーで失敗したDynamoDB操作に対して、システムは操作をリトライし、永続的な失敗に対しては適切なエラーレスポンスを返す必要があります。
+**検証: 要件 6.3**
 
-### Property 14: Timeout fallback behavior
-*For any* external API call that times out, the system should check for cached data and return it if available, or return an error response if no cache exists.
-**Validates: Requirements 6.4**
+### プロパティ14: タイムアウトフォールバック動作
+*任意の*タイムアウトした外部API呼び出しに対して、システムはキャッシュデータをチェックし、利用可能な場合はそれを返し、キャッシュが存在しない場合はエラーレスポンスを返す必要があります。
+**検証: 要件 6.4**
 
-### Property 15: Consistent error response format
-*For any* error response from any endpoint, the response should follow a consistent JSON structure with "error", "code", and optional additional fields.
-**Validates: Requirements 6.5**
+### プロパティ15: 一貫したエラーレスポンス形式
+*任意の*エンドポイントからのエラーレスポンスに対して、レスポンスは"error"、"code"、およびオプションの追加フィールドを持つ一貫したJSON構造に従う必要があります。
+**検証: 要件 6.5**
 
 
 
-## Error Handling
+## エラーハンドリング
 
-### Error Categories
+### エラーカテゴリ
 
-**Client Errors (4xx):**
-- 400 Bad Request: Invalid request parameters (missing symbols, invalid format)
-- 401 Unauthorized: Missing or invalid API key
-- 429 Too Many Requests: Rate limit exceeded
+**クライアントエラー (4xx):**
+- 400 Bad Request: 無効なリクエストパラメータ（シンボル欠落、無効な形式）
+- 401 Unauthorized: APIキーの欠落または無効
+- 429 Too Many Requests: レート制限超過
 
-**Server Errors (5xx):**
-- 500 Internal Server Error: Unexpected errors in Lambda execution
-- 502 Bad Gateway: External API failures after all retries
-- 503 Service Unavailable: DynamoDB unavailable or throttled
+**サーバーエラー (5xx):**
+- 500 Internal Server Error: Lambda実行中の予期しないエラー
+- 502 Bad Gateway: すべてのリトライ後の外部API失敗
+- 503 Service Unavailable: DynamoDB利用不可またはスロットル
 
-### Error Response Format
+### エラーレスポンス形式
 
-All error responses follow a consistent structure:
+すべてのエラーレスポンスは一貫した構造に従います：
 
 ```json
 {
-  "error": "Human-readable error message",
+  "error": "人間が読めるエラーメッセージ",
   "code": "ERROR_CODE_CONSTANT",
   "timestamp": "2024-01-15T10:30:00Z",
   "requestId": "uuid-v4",
   "details": {
-    // Optional additional context
+    // オプションの追加コンテキスト
   }
 }
 ```
 
-### Retry Strategy
+### リトライ戦略
 
-**External API Calls:**
-- Initial attempt
-- Retry 1: Wait 1 second
-- Retry 2: Wait 2 seconds
-- Retry 3: Wait 4 seconds
-- After all retries fail: Log error, serve cached data if available
+**外部API呼び出し:**
+- 初回試行
+- リトライ1: 1秒待機
+- リトライ2: 2秒待機
+- リトライ3: 4秒待機
+- すべてのリトライ失敗後: エラーをログに記録、利用可能な場合はキャッシュデータを提供
 
-**DynamoDB Operations:**
-- Use AWS SDK built-in retry logic
-- Exponential backoff with jitter
-- Maximum 3 retry attempts
-- Distinguish between throttling (retryable) and validation errors (not retryable)
+**DynamoDB操作:**
+- AWS SDK組み込みのリトライロジックを使用
+- ジッターを伴う指数バックオフ
+- 最大3回のリトライ試行
+- スロットリング（リトライ可能）と検証エラー（リトライ不可）を区別
 
-### Timeout Configuration
+### タイムアウト設定
 
-- API Gateway timeout: 29 seconds (AWS maximum)
-- Lambda timeout: 25 seconds (allows time for cleanup)
-- External API call timeout: 5 seconds per attempt
-- DynamoDB operation timeout: 3 seconds
+- API Gatewayタイムアウト: 29秒（AWS最大値）
+- Lambdaタイムアウト: 25秒（クリーンアップ時間を確保）
+- 外部API呼び出しタイムアウト: 試行ごとに5秒
+- DynamoDB操作タイムアウト: 3秒
 
-## Testing Strategy
+## テスト戦略
 
-### Unit Testing
+### ユニットテスト
 
-The backend will use Python's `unittest` framework for unit tests. Unit tests will focus on:
+バックエンドはユニットテストにPythonの`unittest`フレームワークを使用します。ユニットテストは以下に焦点を当てます：
 
-- Request validation logic (parameter parsing, format validation)
-- Response formatting functions
-- Data transformation between external API format and internal format
-- Error response generation
-- Rate limiting calculation logic
-- Cache TTL calculation
-- Retry backoff calculation
+- リクエスト検証ロジック（パラメータ解析、形式検証）
+- レスポンスフォーマット関数
+- 外部API形式と内部形式間のデータ変換
+- エラーレスポンス生成
+- レート制限計算ロジック
+- キャッシュTTL計算
+- リトライバックオフ計算
 
-Example unit tests:
-- Test that invalid symbols are rejected with appropriate error messages
-- Test that response formatter includes all required fields
-- Test that rate limit counter correctly tracks requests per minute
-- Test that cache age calculation correctly determines freshness
+ユニットテストの例:
+- 無効なシンボルが適切なエラーメッセージで拒否されることをテスト
+- レスポンスフォーマッターがすべての必須フィールドを含むことをテスト
+- レート制限カウンターが毎分のリクエストを正しく追跡することをテスト
+- キャッシュ年齢計算が鮮度を正しく判定することをテスト
 
-### Property-Based Testing
+### プロパティベーステスト
 
-The backend will use the `hypothesis` library for property-based testing in Python. Property-based tests will verify universal properties across many randomly generated inputs.
+バックエンドはPythonのプロパティベーステストに`hypothesis`ライブラリを使用します。プロパティベーステストは、多数のランダムに生成された入力にわたって普遍的なプロパティを検証します。
 
-Configuration:
-- Each property test should run a minimum of 100 iterations
-- Tests should use appropriate strategies for generating test data (symbols, timestamps, API responses)
-- Each property test must include a comment tag referencing the design document property
+設定:
+- 各プロパティテストは最低100回の反復を実行する必要があります
+- テストはテストデータ生成に適切な戦略を使用する必要があります（シンボル、タイムスタンプ、APIレスポンス）
+- 各プロパティテストは設計書のプロパティを参照するコメントタグを含む必要があります
 
-Example property tests:
-- Property 1: Generate random cryptocurrency data and verify formatted responses always include all required fields
-- Property 2: Generate random timestamps and verify cache logic correctly determines when to use cached vs fresh data
-- Property 6: Generate random failure scenarios and verify retry logic executes correct number of attempts with proper delays
-- Property 10: Generate random request patterns and verify rate limiting correctly enforces limits
+プロパティテストの例:
+- プロパティ1: ランダムな暗号通貨データを生成し、フォーマットされたレスポンスが常にすべての必須フィールドを含むことを検証
+- プロパティ2: ランダムなタイムスタンプを生成し、キャッシュロジックがキャッシュデータと新しいデータのどちらを使用するかを正しく判定することを検証
+- プロパティ6: ランダムな失敗シナリオを生成し、リトライロジックが適切な遅延で正しい回数の試行を実行することを検証
+- プロパティ10: ランダムなリクエストパターンを生成し、レート制限が制限を正しく実施することを検証
 
-Property test tags must follow this format:
+プロパティテストタグは以下の形式に従う必要があります:
 ```python
 # Feature: crypto-watch-backend, Property 1: Complete response data structure
 def test_response_includes_all_fields(self, crypto_data):
     ...
 ```
 
-### Integration Testing
+### 統合テスト
 
-Integration tests will verify:
-- End-to-end API request flow through API Gateway to Lambda to DynamoDB
-- EventBridge triggering of Price Update Lambda
-- External API integration with retry logic
-- CloudWatch logging and metrics emission
+統合テストは以下を検証します:
+- API GatewayからLambda、DynamoDBへのエンドツーエンドAPIリクエストフロー
+- Price Update LambdaのEventBridgeトリガー
+- リトライロジックを伴う外部API統合
+- CloudWatchログ記録とメトリクス発行
 
-Integration tests will use LocalStack or AWS SAM Local for local testing before deployment.
+統合テストはデプロイ前のローカルテストにLocalStackまたはAWS SAM Localを使用します。
 
-### Testing Approach
+### テストアプローチ
 
-The testing strategy follows an implementation-first approach:
-1. Implement the feature or component
-2. Write unit tests for specific logic and edge cases
-3. Write property-based tests for universal correctness properties
-4. Run integration tests to verify component interactions
-5. Fix any issues discovered by tests
+テスト戦略は実装優先アプローチに従います:
+1. 機能またはコンポーネントを実装
+2. 特定のロジックとエッジケースのユニットテストを作成
+3. 普遍的な正確性プロパティのプロパティベーステストを作成
+4. コンポーネント間の相互作用を検証する統合テストを実行
+5. テストで発見された問題を修正
 
-This approach ensures that tests validate real functionality rather than mocked behavior, providing confidence in the actual implementation.
+このアプローチにより、テストはモックされた動作ではなく実際の機能を検証し、実際の実装に対する信頼性を提供します。
 
 ### Testing Policy
 
@@ -522,11 +522,11 @@ This approach ensures that tests validate real functionality rather than mocked 
 ✓ タスク完了
 ```
 
-## Deployment Architecture
+## デプロイアーキテクチャ
 
 ### Infrastructure as Code
 
-The backend will be defined using AWS SAM (Serverless Application Model) with the following structure:
+バックエンドは以下の構造でAWS SAM（Serverless Application Model）を使用して定義されます:
 
 ```yaml
 # template.yaml
@@ -674,26 +674,26 @@ Outputs:
     Value: !GetAtt ApiFunction.Arn
 ```
 
-### Environment Configuration
+### 環境設定
 
-**Development:**
-- Reduced DynamoDB capacity (on-demand)
-- Verbose logging enabled
-- Shorter cache TTL (2 minutes) for faster testing
-- Rate limit: 50 requests/minute
+**開発環境:**
+- DynamoDB容量削減（オンデマンド）
+- 詳細ログ記録有効
+- より短いキャッシュTTL（2分）で高速テスト
+- レート制限: 50リクエスト/分
 
-**Staging:**
-- Production-like configuration
-- Standard logging
-- Standard cache TTL (5 minutes)
-- Rate limit: 100 requests/minute
+**ステージング環境:**
+- 本番環境に近い設定
+- 標準ログ記録
+- 標準キャッシュTTL（5分）
+- レート制限: 100リクエスト/分
 
-**Production:**
-- Optimized DynamoDB capacity with auto-scaling
-- Error-level logging only
-- Standard cache TTL (5 minutes)
-- Rate limit: 100 requests/minute
-- CloudWatch alarms enabled
+**本番環境:**
+- 自動スケーリングを伴う最適化されたDynamoDB容量
+- エラーレベルのログ記録のみ
+- 標準キャッシュTTL（5分）
+- レート制限: 100リクエスト/分
+- CloudWatchアラーム有効
 
 ### CI/CD Pipeline
 
@@ -854,27 +854,27 @@ AWS CodePipelineも選択肢として利用可能ですが、本プロジェク�
 3. ステージング環境で検証
 4. 再度本番デプロイを試行
 
-### Monitoring and Observability
+### 監視と可観測性
 
-**CloudWatch Metrics:**
-- API request count (per endpoint, per status code)
-- API latency (p50, p95, p99)
-- Lambda invocation count and duration
-- Lambda error count and throttles
-- DynamoDB read/write capacity usage
-- External API call success/failure rate
+**CloudWatchメトリクス:**
+- APIリクエスト数（エンドポイントごと、ステータスコードごと）
+- APIレイテンシ（p50、p95、p99）
+- Lambda呼び出し数と実行時間
+- Lambdaエラー数とスロットル
+- DynamoDB読み取り/書き込み容量使用量
+- 外部API呼び出し成功/失敗率
 
-**CloudWatch Alarms:**
-- API error rate > 5% for 5 minutes
-- Lambda error rate > 1% for 5 minutes
-- DynamoDB throttling events
-- External API failure rate > 50% for 10 minutes
+**CloudWatchアラーム:**
+- APIエラー率 > 5%が5分間継続
+- Lambdaエラー率 > 1%が5分間継続
+- DynamoDBスロットリングイベント
+- 外部API失敗率 > 50%が10分間継続
 
-**CloudWatch Logs:**
-- Structured JSON logging
-- Log groups per Lambda function
-- Retention: 30 days (dev), 90 days (prod)
-- Log level: DEBUG (dev), INFO (staging), ERROR (prod)
+**CloudWatchログ:**
+- 構造化JSONログ記録
+- Lambda関数ごとのログループ
+- 保持期間: 30日（開発）、90日（本番）
+- ログレベル: DEBUG（開発）、INFO（ステージング）、ERROR（本番）
 
 ## Security / Compliance
 
@@ -1004,35 +1004,35 @@ AWS CodePipelineも選択肢として利用可能ですが、本プロジェク�
 - 異常なアクセスパターンの自動検知
 - キーとユーザー（またはテナント）の紐付け管理
 
-### API Key Management
+### APIキー管理
 
-- API keys stored in DynamoDB with hashed values
-- Keys generated using cryptographically secure random generation
-- Key rotation supported through admin API (future enhancement)
-- Keys can be enabled/disabled without deletion
-- `lastUsedAt` attribute recommended for future usage tracking
+- APIキーはハッシュ化された値でDynamoDBに保存
+- 暗号学的に安全な乱数生成を使用してキーを生成
+- 管理API経由でのキーローテーションをサポート（将来的な拡張）
+- キーは削除せずに有効化/無効化が可能
+- 将来的な使用状況追跡のため`lastUsedAt`属性を推奨
 
-### Data Protection
+### データ保護
 
-- All data in transit encrypted via HTTPS (TLS 1.2+)
-- DynamoDB encryption at rest enabled
-- Lambda environment variables encrypted with KMS
-- No sensitive data logged (API keys masked in logs)
-- IP addresses not logged in application logs (available in API Gateway access logs for operational purposes only)
+- 転送中のすべてのデータはHTTPS（TLS 1.2+）で暗号化
+- DynamoDB保存時暗号化を有効化
+- Lambda環境変数はKMSで暗号化
+- 機密データはログに記録しない（APIキーはログでマスク）
+- IPアドレスはアプリケーションログに記録しない（運用目的でのみAPI Gatewayアクセスログで利用可能）
 
-### IAM Permissions
+### IAM権限
 
-Lambda functions follow principle of least privilege:
-- API Lambda: Read-only access to DynamoDB
-- Update Lambda: Read-write access to DynamoDB, no API Gateway access
-- No Lambda has permission to modify IAM roles or policies
+Lambda関数は最小権限の原則に従います:
+- API Lambda: DynamoDBへの読み取り専用アクセス
+- Update Lambda: DynamoDBへの読み取り/書き込みアクセス、API Gatewayアクセスなし
+- どのLambdaもIAMロールやポリシーを変更する権限を持たない
 
-### Rate Limiting
+### レート制限
 
-Rate limiting prevents abuse and controls costs:
-- Per-API-key limits prevent individual client abuse
-- Global limits (future enhancement) prevent overall system overload
-- Rate limit data stored with TTL to automatically clean up old records
+レート制限は悪用を防ぎ、コストを管理します:
+- APIキーごとの制限により個別クライアントの悪用を防止
+- グローバル制限（将来的な拡張）によりシステム全体の過負荷を防止
+- レート制限データはTTLで保存され、古いレコードを自動的にクリーンアップ
 
 ## Out of Scope（今回の非目標）
 
@@ -1348,14 +1348,14 @@ Rate limiting prevents abuse and controls costs:
    - バージョンごとのアクセス数を監視
    - エラー率をバージョン別に追跡
 
-## Performance Optimization
+## パフォーマンス最適化
 
-### Caching Strategy
+### キャッシング戦略
 
-- 5-minute cache TTL balances freshness with API call costs
-- Cache stored in DynamoDB for persistence across Lambda invocations
-- Cache key includes symbol for granular invalidation
-- Conditional cache refresh reduces unnecessary external API calls
+- 5分のキャッシュTTLは鮮度とAPI呼び出しコストのバランスを取る
+- キャッシュはLambda呼び出し間の永続性のためDynamoDBに保存
+- キャッシュキーは粒度の細かい無効化のためシンボルを含む
+- 条件付きキャッシュリフレッシュにより不要な外部API呼び出しを削減
 
 ### Response Optimization
 
@@ -1399,17 +1399,17 @@ Rate limiting prevents abuse and controls costs:
 - 可読性の低下によるデバッグ困難さのデメリットが大きい
 - gzip圧縮により、繰り返されるキー名は効率的に圧縮される
 
-### Lambda Optimization
+### Lambda最適化
 
-- Python 3.11 runtime for performance
-- Minimal dependencies to reduce cold start time
-- Connection pooling for DynamoDB client
-- Environment variable caching
-- Provisioned concurrency for production (optional)
+- パフォーマンスのためPython 3.11ランタイムを使用
+- コールドスタート時間を削減するため最小限の依存関係
+- DynamoDBクライアントの接続プーリング
+- 環境変数のキャッシング
+- 本番環境用のプロビジョニング済み同時実行数（オプション）
 
-### DynamoDB Optimization
+### DynamoDB最適化
 
-- Single-table design reduces number of queries
-- Efficient key structure for common access patterns
-- TTL enabled for automatic cleanup of old data
-- On-demand billing for unpredictable workloads (or provisioned with auto-scaling)
+- シングルテーブル設計によりクエリ数を削減
+- 一般的なアクセスパターンに対する効率的なキー構造
+- 古いデータの自動クリーンアップのためTTLを有効化
+- 予測不可能なワークロードにはオンデマンド課金（または自動スケーリングを伴うプロビジョニング）
