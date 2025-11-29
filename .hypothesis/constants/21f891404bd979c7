@@ -1,0 +1,4 @@
+# file: C:\crypto_watch\backend\src\shared\db.py
+# hypothesis_version: 6.148.3
+
+[3600, 'DYNAMODB_TABLE_NAME', 'Item', 'Keys', 'METADATA', 'PK', 'Responses', 'SK', 'crypto-watch-data', 'dynamodb']

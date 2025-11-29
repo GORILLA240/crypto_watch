@@ -1,0 +1,4 @@
+# file: C:\crypto_watch\backend\src\shared\auth.py
+# hypothesis_version: 6.148.3
+
+[3600, '%Y%m%d%H%M', '100', 'API key is disabled', 'Invalid API key', 'Missing API key', 'X-API-Key', 'X-Api-Key', 'headers', 'x-api-key']

@@ -1,0 +1,4 @@
+# file: C:\crypto_watch\backend\src\shared\external_api.py
+# hypothesis_version: 6.148.3
+
+[0.0, ',', 'ADA', 'ALGO', 'ATOM', 'AVAX', 'Algorand', 'Avalanche', 'BNB', 'BTC', 'Binance Coin', 'Bitcoin', 'Cardano', 'Chainlink', 'Cosmos', 'DOGE', 'DOT', 'Dogecoin', 'ETH', 'EXTERNAL_API_KEY', 'EXTERNAL_API_URL', 'Ethereum', 'FIL', 'Filecoin', 'ICP', 'Internet Computer', 'LINK', 'LTC', 'Litecoin', 'MATIC', 'Polkadot', 'Polygon', 'SOL', 'Solana', 'Stellar', 'TRON', 'TRX', 'UNI', 'Uniswap', 'VET', 'VeChain', 'X-CG-API-KEY', 'XLM', 'XRP', 'algorand', 'attempts', 'avalanche-2', 'binancecoin', 'bitcoin', 'cardano', 'chainlink', 'cosmos', 'dogecoin', 'ethereum', 'filecoin', 'ids', 'include_24hr_change', 'include_market_cap', 'internet-computer', 'lastError', 'litecoin', 'matic-network', 'polkadot', 'ripple', 'solana', 'stellar', 'symbols', 'tron', 'true', 'uniswap', 'usd', 'usd_24h_change', 'usd_market_cap', 'vechain', 'vs_currencies']

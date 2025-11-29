@@ -1,0 +1,4 @@
+# file: C:\crypto_watch\backend\src\shared\transformers.py
+# hypothesis_version: 6.148.3
+
+[0.0, ',', 'ADA', 'ALGO', 'ATOM', 'AVAX', 'Algorand', 'Avalanche', 'BNB', 'BTC', 'Binance Coin', 'Bitcoin', 'Cardano', 'Chainlink', 'Cosmos', 'DOGE', 'DOT', 'Dogecoin', 'ETH', 'Ethereum', 'FIL', 'Filecoin', 'ICP', 'Internet Computer', 'LINK', 'LTC', 'Litecoin', 'MATIC', 'Polkadot', 'Polygon', 'SOL', 'Solana', 'Stellar', 'TRON', 'TRX', 'UNI', 'Uniswap', 'VET', 'VeChain', 'XLM', 'XRP', 'algorand', 'avalanche-2', 'binancecoin', 'bitcoin', 'cardano', 'chainlink', 'coingecko', 'cosmos', 'dogecoin', 'ethereum', 'filecoin', 'internet-computer', 'litecoin', 'matic-network', 'polkadot', 'ripple', 'solana', 'stellar', 'tron', 'uniswap', 'usd', 'usd_24h_change', 'usd_market_cap', 'vechain']

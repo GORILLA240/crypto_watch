@@ -15,6 +15,7 @@ from src.shared.transformers import (
 )
 from src.shared.errors import ValidationError, AuthenticationError, format_error_response
 from src.shared.utils import mask_api_key, get_current_timestamp_iso
+from src.shared.cache import calculate_ttl
 
 
 class TestCryptoPriceModel:
@@ -495,3 +496,98 @@ class TestUtils:
         assert isinstance(timestamp, str)
         assert timestamp.endswith('Z')
         assert 'T' in timestamp
+
+
+class TestCacheUtilities:
+    """Tests for cache management utilities."""
+    
+    def test_calculate_ttl(self):
+        """Test TTL calculation."""
+        before_time = int(time.time())
+        ttl = calculate_ttl(3600)
+        after_time = int(time.time())
+        
+        # TTL should be approximately current time + 3600
+        assert before_time + 3600 <= ttl <= after_time + 3600
+    
+    def test_calculate_ttl_custom_duration(self):
+        """Test TTL calculation with custom duration."""
+        before_time = int(time.time())
+        ttl = calculate_ttl(1800)  # 30 minutes
+        after_time = int(time.time())
+        
+        assert before_time + 1800 <= ttl <= after_time + 1800
+    
+    def test_is_cache_fresh_within_threshold(self):
+        """Test cache freshness check for data within threshold."""
+        from datetime import timezone
+        from src.shared.cache import is_cache_fresh
+        
+        # Data updated 2 minutes ago
+        last_updated = datetime.now(timezone.utc).replace(microsecond=0)
+        last_updated = last_updated.replace(minute=last_updated.minute - 2)
+        
+        assert is_cache_fresh(last_updated, threshold_minutes=5) is True
+    
+    def test_is_cache_fresh_beyond_threshold(self):
+        """Test cache freshness check for data beyond threshold."""
+        from datetime import timezone
+        from src.shared.cache import is_cache_fresh
+        
+        # Data updated 7 minutes ago
+        last_updated = datetime.now(timezone.utc).replace(microsecond=0)
+        last_updated = last_updated.replace(minute=last_updated.minute - 7)
+        
+        assert is_cache_fresh(last_updated, threshold_minutes=5) is False
+    
+    def test_is_cache_fresh_no_timezone(self):
+        """Test cache freshness check for datetime without timezone (assumes UTC)."""
+        from src.shared.cache import is_cache_fresh
+        
+        # Data updated 3 minutes ago (no timezone info)
+        last_updated = datetime.utcnow().replace(microsecond=0)
+        last_updated = last_updated.replace(minute=last_updated.minute - 3)
+        
+        assert is_cache_fresh(last_updated, threshold_minutes=5) is True
+    
+    def test_get_cache_age_seconds(self):
+        """Test cache age calculation."""
+        from datetime import timezone
+        from src.shared.cache import get_cache_age_seconds
+        
+        # Data updated 2 minutes ago
+        last_updated = datetime.now(timezone.utc).replace(microsecond=0)
+        last_updated = last_updated.replace(minute=last_updated.minute - 2)
+        
+        age = get_cache_age_seconds(last_updated)
+        
+        # Should be approximately 120 seconds (2 minutes)
+        assert 115 <= age <= 125  # Allow some tolerance for test execution time
+    
+    def test_should_refresh_cache_no_data(self):
+        """Test refresh decision when no cache exists."""
+        from src.shared.cache import should_refresh_cache
+        
+        assert should_refresh_cache(None) is True
+    
+    def test_should_refresh_cache_fresh_data(self):
+        """Test refresh decision for fresh data."""
+        from datetime import timezone
+        from src.shared.cache import should_refresh_cache
+        
+        # Data updated 2 minutes ago
+        last_updated = datetime.now(timezone.utc).replace(microsecond=0)
+        last_updated = last_updated.replace(minute=last_updated.minute - 2)
+        
+        assert should_refresh_cache(last_updated, threshold_minutes=5) is False
+    
+    def test_should_refresh_cache_stale_data(self):
+        """Test refresh decision for stale data."""
+        from datetime import timezone
+        from src.shared.cache import should_refresh_cache
+        
+        # Data updated 7 minutes ago
+        last_updated = datetime.now(timezone.utc).replace(microsecond=0)
+        last_updated = last_updated.replace(minute=last_updated.minute - 7)
+        
+        assert should_refresh_cache(last_updated, threshold_minutes=5) is True

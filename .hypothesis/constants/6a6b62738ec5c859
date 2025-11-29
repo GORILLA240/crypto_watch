@@ -1,0 +1,4 @@
+# file: C:\crypto_watch\backend\src\shared\models.py
+# hypothesis_version: 6.148.3
+
+[3600, '#', 'APIKey', 'CryptoPrice', 'METADATA', 'PK', 'RateLimit', 'SK', 'Z', 'change24h', 'createdAt', 'enabled', 'keyId', 'lastUpdated', 'lastUsedAt', 'marketCap', 'name', 'price', 'requestCount', 'symbol', 'ttl']

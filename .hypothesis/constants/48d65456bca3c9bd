@@ -1,0 +1,4 @@
+# file: C:\crypto_watch\backend\src\shared\errors.py
+# hypothesis_version: 6.148.3
+
+[400, 401, 429, 500, 502, '*', 'Content-Type', 'DATABASE_ERROR', 'EXTERNAL_API_ERROR', 'INTERNAL_ERROR', 'Invalid API key', 'RATE_LIMIT_EXCEEDED', 'Rate limit exceeded', 'UNAUTHORIZED', 'VALIDATION_ERROR', 'Z', 'application/json', 'body', 'code', 'details', 'error', 'headers', 'requestId', 'retryAfter', 'statusCode', 'timestamp']

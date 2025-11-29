@@ -1,0 +1,4 @@
+# file: C:\crypto_watch\backend\src\shared\__init__.py
+# hypothesis_version: 6.148.3
+
+['0.1.0', 'APIKey', 'CryptoPrice', 'RateLimit', 'get_coingecko_ids', 'get_symbol_name', 'is_supported_symbol']

@@ -1,0 +1,4 @@
+# file: C:\crypto_watch\backend\src\shared\utils.py
+# hypothesis_version: 6.148.3
+
+['+00:00', 'ERROR', 'INFO', 'LOG_LEVEL', 'Z', 'apiKey', 'error', 'errorType', 'httpMethod', 'key_***', 'level', 'method', 'path', 'requestContext', 'requestId', 'timestamp', 'unknown']

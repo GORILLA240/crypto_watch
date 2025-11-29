@@ -1,0 +1,4 @@
+# file: C:\crypto_watch\backend\src\shared\cache.py
+# hypothesis_version: 6.148.3
+
+[3600, 'CryptoPrice', 'age_seconds', 'exists', 'is_fresh', 'last_updated', 'needs_refresh']
