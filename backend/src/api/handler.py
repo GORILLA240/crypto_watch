@@ -20,6 +20,7 @@ from shared.errors import (
     format_error_response
 )
 from shared.utils import setup_logger, log_request, log_error, get_current_timestamp_iso
+from shared.response_optimizer import format_optimized_response
 
 # Initialize logger
 logger = setup_logger(__name__)
@@ -94,20 +95,7 @@ def parse_request_parameters(event: Dict[str, Any]) -> List[str]:
     return symbols
 
 
-def format_response(price_data_list: List[Any]) -> Dict[str, Any]:
-    """
-    Format price data as API response.
-    
-    Args:
-        price_data_list: List of CryptoPrice objects
-        
-    Returns:
-        Formatted response dictionary
-    """
-    return {
-        'data': [price.to_dict() for price in price_data_list],
-        'timestamp': get_current_timestamp_iso()
-    }
+
 
 
 def handle_health_check(event: Dict[str, Any]) -> Dict[str, Any]:
@@ -233,19 +221,13 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         # Sort by symbol for consistent ordering
         price_data_list.sort(key=lambda x: x.symbol)
         
-        # Format and return response
-        response_data = format_response(price_data_list)
+        # Format and return optimized response (with optional compression)
+        timestamp = get_current_timestamp_iso()
+        headers = event.get('headers') or {}
         
         logger.info(f"Successfully processed request for {len(price_data_list)} symbols")
         
-        return {
-            'statusCode': 200,
-            'headers': {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            },
-            'body': json.dumps(response_data)
-        }
+        return format_optimized_response(price_data_list, timestamp, headers)
         
     except ValidationError as e:
         logger.warning(f"Validation error: {e.message}")
