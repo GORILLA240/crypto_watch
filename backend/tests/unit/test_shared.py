@@ -77,12 +77,14 @@ class TestCryptoPriceModel:
         result = price.to_dynamodb_item(ttl_seconds=3600)
         after_time = int(time.time())
         
+        from decimal import Decimal
+        
         assert result['PK'] == 'PRICE#ETH'
         assert result['SK'] == 'METADATA'
         assert result['symbol'] == 'ETH'
         assert result['name'] == 'Ethereum'
-        assert result['price'] == 3000.25
-        assert result['change24h'] == -1.2
+        assert result['price'] == Decimal('3000.25')
+        assert result['change24h'] == Decimal('-1.2')
         assert result['marketCap'] == 360000000000
         assert result['lastUpdated'] == '2024-01-15T10:30:00Z'
         assert 'ttl' in result

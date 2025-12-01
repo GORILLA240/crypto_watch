@@ -2,6 +2,7 @@
 DynamoDB operations.
 
 Provides database access layer for cryptocurrency prices, API keys, and rate limiting.
+Validates: Requirements 5.4, 6.3
 
 DynamoDB Retry Logic (Validates: Requirements 6.3):
 - AWS SDK (boto3) includes built-in retry logic with exponential backoff
@@ -16,6 +17,7 @@ DynamoDB Retry Logic (Validates: Requirements 6.3):
 
 import os
 import boto3
+import time
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 from botocore.exceptions import ClientError
@@ -23,6 +25,7 @@ from botocore.config import Config
 
 from .models import CryptoPrice, APIKey, RateLimit
 from .cache import calculate_ttl
+from .metrics import get_metrics_publisher
 
 
 class DynamoDBClient:
@@ -53,13 +56,14 @@ class DynamoDBClient:
         
         self.dynamodb = boto3.resource('dynamodb', config=config)
         self.table = self.dynamodb.Table(self.table_name)
+        self.metrics = get_metrics_publisher()
     
     def get_price_data(self, symbol: str) -> Optional[CryptoPrice]:
         """
         Retrieve cached price data for a cryptocurrency symbol.
         
         AWS SDK automatically retries transient errors (throttling, 500/503/504).
-        Validates: Requirements 6.3
+        Validates: Requirements 5.4, 6.3
         
         Args:
             symbol: Cryptocurrency symbol (e.g., 'BTC', 'ETH')
@@ -67,6 +71,9 @@ class DynamoDBClient:
         Returns:
             CryptoPrice instance if found, None otherwise
         """
+        start_time = time.time()
+        success = False
+        
         try:
             response = self.table.get_item(
                 Key={
@@ -75,12 +82,19 @@ class DynamoDBClient:
                 }
             )
             
+            success = True
+            latency_ms = (time.time() - start_time) * 1000
+            self.metrics.record_dynamodb_operation('read', success, latency_ms)
+            
             if 'Item' in response:
                 return CryptoPrice.from_dynamodb_item(response['Item'])
             
             return None
             
         except ClientError as e:
+            latency_ms = (time.time() - start_time) * 1000
+            self.metrics.record_dynamodb_operation('read', success, latency_ms)
+            
             error_code = e.response.get('Error', {}).get('Code', 'Unknown')
             # AWS SDK has already retried transient errors
             # If we reach here, either it's a permanent error or retries exhausted
@@ -138,7 +152,7 @@ class DynamoDBClient:
         Save price data to cache with TTL.
         
         AWS SDK automatically retries transient errors (throttling, 500/503/504).
-        Validates: Requirements 6.3
+        Validates: Requirements 5.4, 6.3
         
         Args:
             price_data: CryptoPrice instance to save
@@ -147,13 +161,22 @@ class DynamoDBClient:
         Returns:
             True if successful, False otherwise
         """
+        start_time = time.time()
+        success = False
+        
         try:
             item = price_data.to_dynamodb_item(ttl_seconds)
             
             self.table.put_item(Item=item)
+            success = True
+            latency_ms = (time.time() - start_time) * 1000
+            self.metrics.record_dynamodb_operation('write', success, latency_ms)
             return True
             
         except ClientError as e:
+            latency_ms = (time.time() - start_time) * 1000
+            self.metrics.record_dynamodb_operation('write', success, latency_ms)
+            
             error_code = e.response.get('Error', {}).get('Code', 'Unknown')
             # AWS SDK has already retried transient errors
             print(f"DynamoDB error saving price data for {price_data.symbol}: {error_code} - {e}")
@@ -164,7 +187,7 @@ class DynamoDBClient:
         Save multiple price data items to cache with TTL.
         
         AWS SDK automatically retries transient errors (throttling, 500/503/504).
-        Validates: Requirements 6.3
+        Validates: Requirements 5.4, 6.3
         
         Args:
             price_data_list: List of CryptoPrice instances to save
@@ -176,6 +199,9 @@ class DynamoDBClient:
         if not price_data_list:
             return True
         
+        start_time = time.time()
+        success = False
+        
         try:
             # Use batch write for efficiency
             with self.table.batch_writer() as batch:
@@ -183,9 +209,15 @@ class DynamoDBClient:
                     item = price_data.to_dynamodb_item(ttl_seconds)
                     batch.put_item(Item=item)
             
+            success = True
+            latency_ms = (time.time() - start_time) * 1000
+            self.metrics.record_dynamodb_operation('batch_write', success, latency_ms)
             return True
             
         except ClientError as e:
+            latency_ms = (time.time() - start_time) * 1000
+            self.metrics.record_dynamodb_operation('batch_write', success, latency_ms)
+            
             error_code = e.response.get('Error', {}).get('Code', 'Unknown')
             # AWS SDK has already retried transient errors
             print(f"DynamoDB error saving multiple price data: {error_code} - {e}")

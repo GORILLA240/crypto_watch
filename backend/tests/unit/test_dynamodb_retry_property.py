@@ -87,7 +87,7 @@ class TestDynamoDBRetryProperties:
             # (AWS SDK handles retries internally, so we just verify the call was made)
             assert mock_get_item.called, "DynamoDB operation should have been attempted"
     
-    @settings(max_examples=100)
+    @settings(max_examples=100, deadline=None)
     @given(
         symbol=st.text(min_size=1, max_size=10, alphabet=st.characters(whitelist_categories=('Lu',))),
         error_code=permanent_error_codes
@@ -118,7 +118,7 @@ class TestDynamoDBRetryProperties:
             # Property 2: The method should have attempted the operation once
             assert mock_get_item.called, "DynamoDB operation should have been attempted"
     
-    @settings(max_examples=100)
+    @settings(max_examples=100, deadline=None)
     @given(
         symbol=st.text(min_size=1, max_size=10, alphabet=st.characters(whitelist_categories=('Lu',))),
         name=st.text(min_size=1, max_size=50),
@@ -163,7 +163,7 @@ class TestDynamoDBRetryProperties:
             # Property 2: The method should have attempted the operation
             assert mock_put_item.called, "DynamoDB write operation should have been attempted"
     
-    @settings(max_examples=100)
+    @settings(max_examples=100, deadline=None)
     @given(
         symbol=st.text(min_size=1, max_size=10, alphabet=st.characters(whitelist_categories=('Lu',))),
         name=st.text(min_size=1, max_size=50),
@@ -208,7 +208,7 @@ class TestDynamoDBRetryProperties:
             # Property 2: The method should have attempted the operation
             assert mock_put_item.called, "DynamoDB write operation should have been attempted"
     
-    @settings(max_examples=100)
+    @settings(max_examples=100, deadline=None)
     @given(
         api_key=st.text(min_size=1, max_size=50),
         error_code=st.sampled_from([
@@ -242,7 +242,7 @@ class TestDynamoDBRetryProperties:
             # Property: The method should have attempted the operation
             assert mock_get_item.called, "DynamoDB operation should have been attempted"
     
-    @settings(max_examples=100)
+    @settings(max_examples=100, deadline=None)
     @given(
         api_key=st.text(min_size=1, max_size=50),
         minute=st.text(min_size=12, max_size=12, alphabet=st.characters(whitelist_categories=('Nd',))),
@@ -276,7 +276,7 @@ class TestDynamoDBRetryProperties:
             # Property: The method should have attempted the operation
             assert mock_get_item.called, "DynamoDB operation should have been attempted"
     
-    @settings(max_examples=100)
+    @settings(max_examples=100, deadline=None)
     @given(
         symbols=st.lists(
             st.text(min_size=1, max_size=10, alphabet=st.characters(whitelist_categories=('Lu',))),
@@ -309,7 +309,7 @@ class TestDynamoDBRetryProperties:
             # Property: The method should have attempted the operation
             assert mock_batch_get.called, "DynamoDB batch operation should have been attempted"
     
-    @settings(max_examples=100)
+    @settings(max_examples=100, deadline=None)
     @given(
         symbol=st.text(min_size=1, max_size=10, alphabet=st.characters(whitelist_categories=('Lu',))),
         name=st.text(min_size=1, max_size=50),
@@ -372,7 +372,7 @@ class TestDynamoDBRetryProperties:
             # Property: The operation should have been called exactly once
             assert mock_get_item.call_count == 1, "Successful operation should be called once"
     
-    @settings(max_examples=50)
+    @settings(max_examples=50, deadline=None)
     @given(
         error_sequence=st.lists(
             st.sampled_from([

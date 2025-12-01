@@ -28,9 +28,10 @@ def timestamp_strategy():
 def naive_timestamp_strategy():
     """Generate valid datetime objects without timezone info."""
     # Generate timestamps in the past to avoid negative age calculations
+    # Use a fixed max_value to ensure consistency across test runs
     return st.datetimes(
         min_value=datetime(2020, 1, 1),
-        max_value=datetime.now() - timedelta(seconds=1)  # At least 1 second in the past
+        max_value=datetime(2024, 12, 1)  # Fixed date in the past
     )
 
 

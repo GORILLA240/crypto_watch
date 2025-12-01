@@ -7,6 +7,7 @@ Defines data structures for cryptocurrency prices, API keys, and rate limiting.
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional, Dict, Any
+from decimal import Decimal
 import time
 
 
@@ -47,8 +48,8 @@ class CryptoPrice:
             'SK': 'METADATA',
             'symbol': self.symbol,
             'name': self.name,
-            'price': self.price,
-            'change24h': self.change24h,
+            'price': Decimal(str(self.price)),
+            'change24h': Decimal(str(self.change24h)),
             'marketCap': self.market_cap,
             'lastUpdated': self.last_updated.isoformat() + 'Z',
             'ttl': current_timestamp + ttl_seconds
