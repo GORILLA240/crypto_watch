@@ -2,6 +2,16 @@
 DynamoDB operations.
 
 Provides database access layer for cryptocurrency prices, API keys, and rate limiting.
+
+DynamoDB Retry Logic (Validates: Requirements 6.3):
+- AWS SDK (boto3) includes built-in retry logic with exponential backoff
+- Default retry configuration:
+  - Standard retry mode with 3 maximum attempts
+  - Exponential backoff with jitter
+  - Automatic retry for throttling errors (ProvisionedThroughputExceededException)
+  - Automatic retry for transient errors (500, 503, 504)
+  - No retry for validation errors (400, 404)
+- This implementation relies on AWS SDK's built-in retry mechanism
 """
 
 import os
@@ -9,28 +19,47 @@ import boto3
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 from botocore.exceptions import ClientError
+from botocore.config import Config
 
 from .models import CryptoPrice, APIKey, RateLimit
 from .cache import calculate_ttl
 
 
 class DynamoDBClient:
-    """DynamoDB client for cache operations."""
+    """
+    DynamoDB client for cache operations.
+    
+    Uses AWS SDK built-in retry logic with exponential backoff for transient errors.
+    Validates: Requirements 6.3
+    """
     
     def __init__(self, table_name: Optional[str] = None):
         """
-        Initialize DynamoDB client.
+        Initialize DynamoDB client with retry configuration.
         
         Args:
             table_name: Name of the DynamoDB table (defaults to environment variable)
         """
         self.table_name = table_name or os.environ.get('DYNAMODB_TABLE_NAME', 'crypto-watch-data')
-        self.dynamodb = boto3.resource('dynamodb')
+        
+        # Configure boto3 with explicit retry settings
+        # Standard mode provides exponential backoff with jitter
+        config = Config(
+            retries={
+                'mode': 'standard',
+                'max_attempts': 3
+            }
+        )
+        
+        self.dynamodb = boto3.resource('dynamodb', config=config)
         self.table = self.dynamodb.Table(self.table_name)
     
     def get_price_data(self, symbol: str) -> Optional[CryptoPrice]:
         """
         Retrieve cached price data for a cryptocurrency symbol.
+        
+        AWS SDK automatically retries transient errors (throttling, 500/503/504).
+        Validates: Requirements 6.3
         
         Args:
             symbol: Cryptocurrency symbol (e.g., 'BTC', 'ETH')
@@ -52,13 +81,18 @@ class DynamoDBClient:
             return None
             
         except ClientError as e:
-            # Log error but don't raise - return None to indicate cache miss
-            print(f"Error retrieving price data for {symbol}: {e}")
+            error_code = e.response.get('Error', {}).get('Code', 'Unknown')
+            # AWS SDK has already retried transient errors
+            # If we reach here, either it's a permanent error or retries exhausted
+            print(f"DynamoDB error retrieving price data for {symbol}: {error_code} - {e}")
             return None
     
     def get_multiple_price_data(self, symbols: List[str]) -> Dict[str, CryptoPrice]:
         """
         Retrieve cached price data for multiple cryptocurrency symbols.
+        
+        AWS SDK automatically retries transient errors (throttling, 500/503/504).
+        Validates: Requirements 6.3
         
         Args:
             symbols: List of cryptocurrency symbols
@@ -94,13 +128,17 @@ class DynamoDBClient:
             return result
             
         except ClientError as e:
-            # Log error but don't raise - return empty dict to indicate cache miss
-            print(f"Error retrieving multiple price data: {e}")
+            error_code = e.response.get('Error', {}).get('Code', 'Unknown')
+            # AWS SDK has already retried transient errors
+            print(f"DynamoDB error retrieving multiple price data: {error_code} - {e}")
             return {}
     
     def save_price_data(self, price_data: CryptoPrice, ttl_seconds: int = 3600) -> bool:
         """
         Save price data to cache with TTL.
+        
+        AWS SDK automatically retries transient errors (throttling, 500/503/504).
+        Validates: Requirements 6.3
         
         Args:
             price_data: CryptoPrice instance to save
@@ -116,12 +154,17 @@ class DynamoDBClient:
             return True
             
         except ClientError as e:
-            print(f"Error saving price data for {price_data.symbol}: {e}")
+            error_code = e.response.get('Error', {}).get('Code', 'Unknown')
+            # AWS SDK has already retried transient errors
+            print(f"DynamoDB error saving price data for {price_data.symbol}: {error_code} - {e}")
             return False
     
     def save_multiple_price_data(self, price_data_list: List[CryptoPrice], ttl_seconds: int = 3600) -> bool:
         """
         Save multiple price data items to cache with TTL.
+        
+        AWS SDK automatically retries transient errors (throttling, 500/503/504).
+        Validates: Requirements 6.3
         
         Args:
             price_data_list: List of CryptoPrice instances to save
@@ -143,12 +186,17 @@ class DynamoDBClient:
             return True
             
         except ClientError as e:
-            print(f"Error saving multiple price data: {e}")
+            error_code = e.response.get('Error', {}).get('Code', 'Unknown')
+            # AWS SDK has already retried transient errors
+            print(f"DynamoDB error saving multiple price data: {error_code} - {e}")
             return False
     
     def get_api_key(self, key_id: str) -> Optional[APIKey]:
         """
         Retrieve API key information.
+        
+        AWS SDK automatically retries transient errors (throttling, 500/503/504).
+        Validates: Requirements 6.3
         
         Args:
             key_id: API key identifier
@@ -170,12 +218,17 @@ class DynamoDBClient:
             return None
             
         except ClientError as e:
-            print(f"Error retrieving API key {key_id}: {e}")
+            error_code = e.response.get('Error', {}).get('Code', 'Unknown')
+            # AWS SDK has already retried transient errors
+            print(f"DynamoDB error retrieving API key {key_id}: {error_code} - {e}")
             return None
     
     def get_rate_limit(self, api_key: str, minute: str) -> Optional[RateLimit]:
         """
         Retrieve rate limit data for an API key and minute.
+        
+        AWS SDK automatically retries transient errors (throttling, 500/503/504).
+        Validates: Requirements 6.3
         
         Args:
             api_key: API key identifier
@@ -198,12 +251,17 @@ class DynamoDBClient:
             return None
             
         except ClientError as e:
-            print(f"Error retrieving rate limit for {api_key}/{minute}: {e}")
+            error_code = e.response.get('Error', {}).get('Code', 'Unknown')
+            # AWS SDK has already retried transient errors
+            print(f"DynamoDB error retrieving rate limit for {api_key}/{minute}: {error_code} - {e}")
             return None
     
     def save_rate_limit(self, rate_limit: RateLimit) -> bool:
         """
         Save rate limit data.
+        
+        AWS SDK automatically retries transient errors (throttling, 500/503/504).
+        Validates: Requirements 6.3
         
         Args:
             rate_limit: RateLimit instance to save
@@ -217,5 +275,7 @@ class DynamoDBClient:
             return True
             
         except ClientError as e:
-            print(f"Error saving rate limit: {e}")
+            error_code = e.response.get('Error', {}).get('Code', 'Unknown')
+            # AWS SDK has already retried transient errors
+            print(f"DynamoDB error saving rate limit: {error_code} - {e}")
             return False

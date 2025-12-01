@@ -96,7 +96,9 @@ def log_request(logger: logging.Logger, event: Dict[str, Any], api_key: str = No
 
 def log_error(logger: logging.Logger, error: Exception, request_id: str = None, **kwargs) -> None:
     """
-    Log error with details.
+    Log error with detailed information including stack trace.
+    
+    Validates: Requirements 5.2
     
     Args:
         logger: Logger instance
@@ -104,11 +106,14 @@ def log_error(logger: logging.Logger, error: Exception, request_id: str = None, 
         request_id: Optional request ID
         **kwargs: Additional context
     """
+    import traceback
+    
     log_data = {
         'level': 'ERROR',
         'error': str(error),
         'errorType': type(error).__name__,
-        'timestamp': get_current_timestamp_iso()
+        'timestamp': get_current_timestamp_iso(),
+        'stackTrace': traceback.format_exc()
     }
     
     if request_id:

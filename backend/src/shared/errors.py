@@ -52,14 +52,24 @@ class DatabaseError(CryptoWatchError):
 
 def format_error_response(error: Exception, request_id: Optional[str] = None) -> Dict[str, Any]:
     """
-    Format error as API Gateway response.
+    Format error as API Gateway response with consistent structure.
+    
+    Validates: Requirements 6.1, 6.2, 6.5
+    
+    All error responses follow a consistent JSON structure:
+    - error: Human-readable error message
+    - code: Error code constant
+    - timestamp: ISO 8601 timestamp
+    - requestId: Unique request identifier
+    - details: Optional additional context
+    - retryAfter: Optional retry delay (for rate limit errors)
     
     Args:
         error: Exception to format
         request_id: Optional request ID for tracking
         
     Returns:
-        API Gateway response dictionary
+        API Gateway response dictionary with consistent error format
     """
     if isinstance(error, CryptoWatchError):
         status_code = error.status_code
@@ -76,7 +86,7 @@ def format_error_response(error: Exception, request_id: Optional[str] = None) ->
         if isinstance(error, RateLimitError):
             body['retryAfter'] = error.retry_after
     else:
-        # Unexpected error
+        # Unexpected error - don't expose internal details
         status_code = 500
         body = {
             'error': 'Internal server error',
