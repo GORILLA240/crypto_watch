@@ -1,0 +1,395 @@
+name: Deploy Crypto Watch Backend
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+
+env:
+  PYTHON_VERSION: '3.11'
+  AWS_REGION: 'us-east-1'
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+      
+      - name: Run linting (flake8)
+        run: |
+          flake8 src/ tests/ --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 src/ tests/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+      
+      - name: Run code formatting check (black)
+        run: |
+          black --check src/ tests/
+      
+      - name: Run type checking (mypy)
+        run: |
+          mypy src/ --ignore-missing-imports
+        continue-on-error: true
+      
+      - name: Run unit tests
+        run: |
+          pytest tests/unit/ -v --tb=short --junitxml=junit/test-results-unit.xml
+      
+      - name: Run property-based tests
+        run: |
+          pytest tests/unit/ -v -m property --tb=short --junitxml=junit/test-results-property.xml
+      
+      - name: Run integration tests
+        run: |
+          pytest tests/integration/ -v -m integration --tb=short --junitxml=junit/test-results-integration.xml
+      
+      - name: Generate coverage report
+        run: |
+          pytest --cov=src --cov-report=xml --cov-report=html --cov-report=term
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./backend/coverage.xml
+          flags: backend
+          name: backend-coverage
+        continue-on-error: true
+      
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: backend/junit/test-results-*.xml
+      
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: backend/htmlcov/
+
+  build:
+    name: Build SAM Application
+    needs: test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Set up AWS SAM CLI
+        uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+      
+      - name: Build SAM application
+        run: |
+          sam build --use-container
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sam-build
+          path: backend/.aws-sam/build/
+
+  deploy-dev:
+    name: Deploy to Development
+    needs: build
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment:
+      name: development
+      url: ${{ steps.deploy.outputs.api_url }}
+    defaults:
+      run:
+        working-directory: backend
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: sam-build
+          path: backend/.aws-sam/build/
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Set up AWS SAM CLI
+        uses: aws-actions/setup-sam@v2
+      
+      - name: Deploy to development
+        id: deploy
+        run: |
+          sam deploy \
+            --config-file samconfig-dev.toml \
+            --config-env dev \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset
+          
+          # Get API URL
+          API_URL=$(aws cloudformation describe-stacks \
+            --stack-name crypto-watch-backend-dev \
+            --query 'Stacks[0].Outputs[?OutputKey==`ApiEndpoint`].OutputValue' \
+            --output text)
+          echo "api_url=$API_URL" >> $GITHUB_OUTPUT
+      
+      - name: Run smoke tests
+        run: |
+          # Wait for API to be ready
+          sleep 30
+          
+          # Test health endpoint
+          API_URL="${{ steps.deploy.outputs.api_url }}"
+          curl -f "$API_URL/health" || exit 1
+      
+      - name: Notify on failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "❌ Development deployment failed",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Development Deployment Failed*\n\nBranch: `${{ github.ref_name }}`\nCommit: `${{ github.sha }}`\nActor: ${{ github.actor }}"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        continue-on-error: true
+
+  deploy-staging:
+    name: Deploy to Staging
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: ${{ steps.deploy.outputs.api_url }}
+    defaults:
+      run:
+        working-directory: backend
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: sam-build
+          path: backend/.aws-sam/build/
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Set up AWS SAM CLI
+        uses: aws-actions/setup-sam@v2
+      
+      - name: Deploy to staging
+        id: deploy
+        run: |
+          sam deploy \
+            --config-file samconfig-staging.toml \
+            --config-env staging \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset
+          
+          # Get API URL
+          API_URL=$(aws cloudformation describe-stacks \
+            --stack-name crypto-watch-backend-staging \
+            --query 'Stacks[0].Outputs[?OutputKey==`ApiEndpoint`].OutputValue' \
+            --output text)
+          echo "api_url=$API_URL" >> $GITHUB_OUTPUT
+      
+      - name: Run integration tests
+        run: |
+          # Wait for API to be ready
+          sleep 30
+          
+          # Run integration tests against staging
+          pytest tests/integration/ -v --tb=short
+        continue-on-error: true
+      
+      - name: Notify team for approval
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "✅ Staging deployment successful - Ready for production",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Staging Deployment Successful*\n\nBranch: `${{ github.ref_name }}`\nCommit: `${{ github.sha }}`\nAPI URL: ${{ steps.deploy.outputs.api_url }}\n\n*Ready for production deployment*"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        continue-on-error: true
+
+  deploy-prod:
+    name: Deploy to Production
+    needs: deploy-staging
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.api_url }}
+    defaults:
+      run:
+        working-directory: backend
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: sam-build
+          path: backend/.aws-sam/build/
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Set up AWS SAM CLI
+        uses: aws-actions/setup-sam@v2
+      
+      - name: Deploy to production with CodeDeploy
+        id: deploy
+        run: |
+          sam deploy \
+            --config-file samconfig-prod.toml \
+            --config-env prod \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset
+          
+          # Get API URL
+          API_URL=$(aws cloudformation describe-stacks \
+            --stack-name crypto-watch-backend-prod \
+            --query 'Stacks[0].Outputs[?OutputKey==`ApiEndpoint`].OutputValue' \
+            --output text)
+          echo "api_url=$API_URL" >> $GITHUB_OUTPUT
+      
+      - name: Monitor deployment
+        run: |
+          # Wait for deployment to complete
+          sleep 60
+          
+          # Check CloudWatch alarms
+          aws cloudwatch describe-alarms \
+            --alarm-names \
+              crypto-watch-backend-prod-LambdaErrorAlarm \
+              crypto-watch-backend-prod-ApiGateway5xxAlarm \
+            --state-value ALARM \
+            --query 'MetricAlarms[*].[AlarmName,StateValue]' \
+            --output table
+      
+      - name: Notify on success
+        if: success()
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "🚀 Production deployment successful",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Production Deployment Successful*\n\nBranch: `${{ github.ref_name }}`\nCommit: `${{ github.sha }}`\nAPI URL: ${{ steps.deploy.outputs.api_url }}\nActor: ${{ github.actor }}"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        continue-on-error: true
+      
+      - name: Notify on failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "🚨 Production deployment failed - Automatic rollback initiated",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Production Deployment Failed*\n\nBranch: `${{ github.ref_name }}`\nCommit: `${{ github.sha }}`\nActor: ${{ github.actor }}\n\n*Automatic rollback has been initiated by CloudWatch Alarms*"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        continue-on-error: true

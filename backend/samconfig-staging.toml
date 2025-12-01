@@ -1,0 +1,27 @@
+version = 0.1
+
+[staging]
+[staging.deploy]
+[staging.deploy.parameters]
+stack_name = "crypto-watch-backend-staging"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket"
+s3_prefix = "crypto-watch-backend-staging"
+region = "us-east-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = [
+    "Environment=staging",
+    "RateLimitPerMinute=100",
+    "CacheTTLSeconds=300",
+    "LogLevel=INFO"
+]
+tags = [
+    "Environment=staging",
+    "Project=crypto-watch-backend",
+    "ManagedBy=SAM"
+]
+
+[staging.build]
+[staging.build.parameters]
+cached = true
+parallel = true

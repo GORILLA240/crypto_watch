@@ -1,0 +1,27 @@
+version = 0.1
+
+[prod]
+[prod.deploy]
+[prod.deploy.parameters]
+stack_name = "crypto-watch-backend-prod"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket"
+s3_prefix = "crypto-watch-backend-prod"
+region = "us-east-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = [
+    "Environment=prod",
+    "RateLimitPerMinute=100",
+    "CacheTTLSeconds=300",
+    "LogLevel=ERROR"
+]
+tags = [
+    "Environment=prod",
+    "Project=crypto-watch-backend",
+    "ManagedBy=SAM"
+]
+
+[prod.build]
+[prod.build.parameters]
+cached = true
+parallel = true
