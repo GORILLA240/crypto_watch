@@ -19,9 +19,9 @@ class CryptoPriceModel extends CryptoPrice {
         symbol: json['symbol'] as String,
         name: json['name'] as String,
         price: _parseDouble(json['price']),
-        change24h: _parseDouble(json['change_24h'] ?? json['change24h']),
-        marketCap: _parseDouble(json['market_cap'] ?? json['marketCap']),
-        lastUpdated: _parseDateTime(json['last_updated'] ?? json['lastUpdated']),
+        change24h: _parseDouble(json['change24h'] ?? json['change_24h']),
+        marketCap: _parseDouble(json['marketCap'] ?? json['market_cap']),
+        lastUpdated: _parseDateTime(json['lastUpdated'] ?? json['last_updated']),
       );
     } catch (e) {
       throw FormatException('Failed to parse CryptoPriceModel from JSON: $e');
@@ -87,7 +87,13 @@ class CryptoPriceModel extends CryptoPrice {
       throw const FormatException('DateTime value cannot be null');
     }
     if (value is String) {
-      return DateTime.parse(value);
+      // 不正な形式（+00:00Zなど）を修正
+      String cleanedValue = value;
+      if (value.contains('+') && value.endsWith('Z')) {
+        // +00:00Z -> Z に変換
+        cleanedValue = value.substring(0, value.lastIndexOf('+')) + 'Z';
+      }
+      return DateTime.parse(cleanedValue);
     }
     if (value is int) {
       // タイムスタンプ（秒）の場合

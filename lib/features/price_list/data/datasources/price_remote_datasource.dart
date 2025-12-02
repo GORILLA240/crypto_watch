@@ -44,7 +44,12 @@ class PriceRemoteDataSourceImpl implements PriceRemoteDataSource {
   @override
   Future<List<CryptoPriceModel>> getAllPrices() async {
     try {
-      final response = await apiClient.get(ApiConstants.pricesEndpoint);
+      // デフォルトのシンボルを使用
+      final symbolsParam = ApiConstants.defaultSymbols.join(',');
+      final response = await apiClient.get(
+        ApiConstants.pricesEndpoint,
+        queryParameters: {'symbols': symbolsParam},
+      );
       return _parsePricesResponse(response);
     } on AppException {
       rethrow;
