@@ -123,15 +123,7 @@ Resources:
         Variables:
           RATE_LIMIT_PER_MINUTE: !Ref RateLimitPerMinute
           CACHE_TTL_SECONDS: !Ref CacheTTLSeconds
-      AutoPublishAlias: live
-      DeploymentPreference:
-        Type: !If [IsProduction, Linear10PercentEvery1Minute, AllAtOnce]
-        Alarms: !If
-          - IsProduction
-          - - !Ref LambdaErrorAlarm
-            - !Ref ApiGateway5xxAlarm
-            - !Ref LambdaThrottleAlarm
-          - !Ref AWS::NoValue
+
       Events:
         GetPrices:
           Type: Api

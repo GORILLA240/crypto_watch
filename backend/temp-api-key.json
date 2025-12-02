@@ -1,0 +1,9 @@
+{
+  "PK": {"S": "APIKEY#test-key-12345678901234567890"},
+  "SK": {"S": "METADATA"},
+  "keyId": {"S": "test-key-12345678901234567890"},
+  "name": {"S": "Production App"},
+  "enabled": {"BOOL": true},
+  "createdAt": {"S": "2025-12-02T14:00:00Z"},
+  "lastUsedAt": {"S": "2025-12-02T14:00:00Z"}
+}

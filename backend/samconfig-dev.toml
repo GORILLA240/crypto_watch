@@ -3,10 +3,10 @@ version = 0.1
 [dev]
 [dev.deploy]
 [dev.deploy.parameters]
-stack_name = "crypto-watch-backend-dev"
-s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket"
+stack_name = "crypto-watch-api-v1"
+s3_bucket = "crypto-watch-sam-deploy-prod-ap-northeast-1"
 s3_prefix = "crypto-watch-backend-dev"
-region = "us-east-1"
+region = "ap-northeast-1"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
 parameter_overrides = [
