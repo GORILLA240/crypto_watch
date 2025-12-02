@@ -1,187 +1,119 @@
-# プロジェクト構造
+---
+inclusion: always
+---
 
-## リポジトリレイアウト
+# プロジェクト構造とアーキテクチャパターン
 
-Flutterフロントエンドとサーバーレスバックエンドの両方を含むモノレポです。
+## モノレポ構成
 
-```
-crypto_watch/
-├── lib/                    # Flutterアプリケーションソース
-├── backend/                # AWSサーバーレスバックエンド
-├── test/                   # Flutterテスト
-├── android/                # Androidプラットフォームファイル
-├── ios/                    # iOSプラットフォームファイル
-├── web/                    # Webプラットフォームファイル
-├── windows/                # Windowsプラットフォームファイル
-├── linux/                  # Linuxプラットフォームファイル
-├── macos/                  # macOSプラットフォームファイル
-├── pubspec.yaml            # Flutter依存関係
-└── analysis_options.yaml   # Dart解析設定
-```
+Flutterフロントエンド（ルート）とAWSサーバーレスバックエンド（`backend/`）のモノレポ。
 
-## Flutterフロントエンド構造
+## Flutter命名規約とパターン
 
-```
-lib/
-└── main.dart              # アプリケーションエントリーポイント
-```
-
-**現在の状態**: プレースホルダーUIを持つ最小限の実装。以下を含む：
-- `CryptoWatchApp` - ダークテーマのルートウィジェット
-- `PriceHomePage` - 価格表示のメイン画面（現在はモックデータを表示）
-- TODO: モックデータを実際のAPI呼び出しに置き換える
-
-**規約**:
+- ファイル名: `snake_case.dart`
+- クラス名: `PascalCase`
 - 可能な限り`const`コンストラクタを使用
-- 黒背景のダークテーマ
-- Material Designコンポーネント
-- `StatefulWidget`による状態管理（今後進化する可能性あり）
+- ダークテーマ（黒背景）を維持
+- Material Designコンポーネントを使用
+- 状態管理: `StatefulWidget`
 
-## バックエンド構造
+新機能追加時:
+- `lib/features/{feature_name}/`に配置（ウィジェット、モデル、サービスを含む）
+- テストは`test/features/{feature_name}/`に追加
 
-```
-backend/
-├── src/
-│   ├── api/                    # API Lambda関数
-│   │   ├── handler.py         # HTTPリクエストハンドラー
-│   │   └── requirements.txt   # 関数固有の依存関係
-│   │
-│   ├── update/                 # 価格更新Lambda関数
-│   │   ├── handler.py         # スケジュール更新ハンドラー
-│   │   └── requirements.txt   # 関数固有の依存関係
-│   │
-│   └── shared/                 # 共有Lambdaレイヤー
-│       ├── __init__.py
-│       ├── auth.py            # APIキー検証、レート制限
-│       ├── cache.py           # キャッシュ鮮度ロジック
-│       ├── db.py              # DynamoDB操作
-│       ├── errors.py          # カスタム例外、エラーフォーマット
-│       ├── external_api.py    # リトライ付き外部APIクライアント
-│       ├── models.py          # データモデル（CryptoPrice、APIKeyなど）
-│       └── utils.py           # ログ、タイムスタンプ、ユーティリティ
-│
-├── tests/
-│   ├── unit/                   # ユニットテスト
-│   │   ├── test_api.py
-│   │   ├── test_update.py
-│   │   └── test_shared.py
-│   ├── integration/            # 統合テスト
-│   │   └── test_e2e.py
-│   └── conftest.py            # Pytestフィクスチャ
-│
-├── scripts/
-│   ├── deploy.sh              # 自動デプロイ
-│   └── setup-api-key.py       # APIキー管理
-│
-├── events/                     # ローカルテスト用サンプルイベント
-│   ├── api-event.json
-│   └── update-event.json
-│
-├── docs/                       # ドキュメント
-│   ├── API_KEY_MANAGEMENT.md
-│   ├── ROLLBACK_VERIFICATION.md
-│   └── STAGING_TO_PROD_PROMOTION.md
-│
-├── template.yaml               # AWS SAM CloudFormationテンプレート
-├── samconfig-dev.toml         # 開発環境設定
-├── samconfig-staging.toml     # ステージング環境設定
-├── samconfig-prod.toml        # 本番環境設定
-├── requirements-dev.txt       # 開発依存関係
-├── pyproject.toml             # Pythonプロジェクト設定（Black、MyPy）
-├── pytest.ini                 # Pytest設定
-├── .flake8                    # Flake8リンター設定
-├── Makefile                   # 共通開発コマンド
-└── README.md                  # 包括的なドキュメント
-```
+## Python/Backend命名規約
 
-## バックエンドアーキテクチャパターン
+- ファイル/関数: `snake_case`
+- クラス: `PascalCase`
+- 定数: `UPPER_SNAKE_CASE`
+- 型ヒント必須（MyPy検証）
+- データモデルは`@dataclass`を使用
+- 行の長さ: 100文字（Black）
+
+## バックエンドディレクトリ構造
+
+- `backend/src/api/` - API Lambda（HTTPハンドラー）
+- `backend/src/update/` - 価格更新Lambda（EventBridge）
+- `backend/src/shared/` - 共有Lambdaレイヤー（コード重複削減）
+- `backend/tests/` - unit/integration/property-based tests
+- `backend/scripts/` - デプロイ/APIキー管理
+- `backend/docs/` - 運用ドキュメント
+
+## 重要なアーキテクチャパターン
 
 ### Lambdaレイヤーパターン
-- 共有コードは`src/shared/`に配置し、Lambdaレイヤーとしてデプロイ
-- 両方のLambda関数がこのレイヤーからインポート
-- コードの重複とデプロイサイズを削減
+共有コードは`backend/src/shared/`に配置。新機能追加時は適切なモジュールに配置し、両Lambda関数の`requirements.txt`は更新しない（レイヤーに依存）。
 
 ### シングルテーブルDynamoDB設計
-- すべてのデータタイプを1つのテーブルに: `crypto-watch-data-{environment}`
-- プライマリキー: `PK`（パーティションキー）、`SK`（ソートキー）
-- GSI1: `GSI1PK`、`GSI1SK` 代替アクセスパターン用
+テーブル: `crypto-watch-data-{environment}`
 
-**アイテムタイプ**:
-1. **価格データ**: `PK=PRICE#{symbol}`, `SK=METADATA`
-2. **APIキー**: `PK=APIKEY#{keyId}`, `SK=METADATA`
-3. **レート制限**: `PK=APIKEY#{keyId}`, `SK=RATELIMIT#{minute}`
+キーパターン:
+- 価格: `PK=PRICE#{symbol}`, `SK=METADATA`
+- APIキー: `PK=APIKEY#{keyId}`, `SK=METADATA`
+- レート制限: `PK=APIKEY#{keyId}`, `SK=RATELIMIT#{minute}`
 
-### エラーハンドリングパターン
-- `errors.py`のカスタム例外
-- エラーコード付きの一貫したエラーレスポンス形式
-- HTTPステータスコード: 400、401、429、500、503
+新データタイプ追加時:
+1. `PK={TYPE}#{id}`, `SK=METADATA`パターンを使用
+2. `backend/src/shared/models.py`にデータクラス定義
+3. `backend/src/shared/db.py`にアクセスメソッド追加
 
-### テスト戦略
-- 個別モジュールのユニットテスト
-- Hypothesisを使用したプロパティベーステスト
-- モックAWSサービス（moto）を使用した統合テスト
-- 再利用可能なテストセットアップ用の`conftest.py`のPytestフィクスチャ
+### 共有モジュールの責務（backend/src/shared/）
 
-## ファイル命名規則
+- `models.py` - データモデル（`@dataclass`）
+- `db.py` - DynamoDB操作とシリアライゼーション
+- `auth.py` - 認証/認可/レート制限
+- `cache.py` - キャッシュ管理
+- `external_api.py` - 外部APIクライアント（リトライロジック）
+- `errors.py` - 例外階層と`format_error_response()`
+- `utils.py` - ログ、タイムスタンプ、APIキーマスキング
 
-### Flutter
-- ファイルはスネークケース: `main.dart`、`price_home_page.dart`
-- クラスはパスカルケース: `CryptoWatchApp`、`PriceHomePage`
+新機能は適切なモジュールに配置。複数責務にまたがる場合は新モジュール作成。常に型ヒントとdocstringを追加。
 
-### Pythonバックエンド
-- ファイルと関数はスネークケース: `handler.py`、`external_api.py`
-- クラスはパスカルケース: `CryptoPrice`、`APIKey`
-- 定数はUPPER_SNAKE_CASE: `RATE_LIMIT_PER_MINUTE`
+### エラーハンドリング
+`backend/src/shared/errors.py`のカスタム例外を使用:
+- 基底: `CryptoWatchError`
+- 派生: `AuthenticationError`, `RateLimitError`, `ValidationError`等
+- HTTPマッピング: 400（バリデーション）、401（認証）、429（レート制限）、500（内部）、503（外部API）
 
-## モジュール構成
+### テスト要件
+新コード追加時は必ず以下を作成:
+1. ユニットテスト（`backend/tests/unit/`）
+2. プロパティベーステスト（Hypothesis）
+3. 統合テスト（`backend/tests/integration/`、moto使用）
 
-### バックエンド共有モジュール
+`backend/tests/conftest.py`の共有フィクスチャを再利用。カバレッジ目標: 80%以上。
 
-**models.py**: `@dataclass`を使用したデータクラス
-- `CryptoPrice` - 価格データ構造
-- `APIKey` - APIキーメタデータ
-- `RateLimit` - レート制限状態
+## 環境管理
 
-**db.py**: DynamoDB操作
-- `get_item()`、`put_item()`、`query()`、`update_item()`
-- シリアライゼーション/デシリアライゼーションを処理
+3環境: `dev`（開発）、`staging`（検証）、`prod`（本番）
 
-**auth.py**: 認証と認可
-- `validate_api_key()` - APIキーの有効性チェック
-- `check_rate_limit()` - レート制限の適用
-- `update_rate_limit()` - リクエスト数の追跡
+リソース命名: すべて`{resource}-{environment}`サフィックス
+- DynamoDB: `crypto-watch-data-{env}`
+- Lambda: `crypto-watch-api-{env}`, `crypto-watch-update-{env}`
+- API Gateway: `crypto-watch-api-{env}`
 
-**cache.py**: キャッシュ管理
-- `is_cache_fresh()` - キャッシュデータの有効性チェック
-- `calculate_ttl()` - 有効期限の計算
+環境設定: `backend/samconfig-{env}.toml`
 
-**external_api.py**: 外部APIクライアント
-- 指数バックオフ付きリトライロジック
-- API障害のエラーハンドリング
-- レスポンスのパースと検証
+新パラメータ追加時は全環境設定ファイルと`backend/template.yaml`を更新。
 
-**errors.py**: 例外階層
-- `CryptoWatchError` - 基底例外
-- `AuthenticationError`、`RateLimitError`、`ValidationError`など
-- `format_error_response()` - 一貫したエラーフォーマット
+## デプロイワークフロー（厳守）
 
-**utils.py**: 汎用ユーティリティ
-- ログ設定
-- タイムスタンプ処理
-- ログ用APIキーマスキング
+1. `dev`でテスト → 2. `staging`で検証 → 3. `prod`へプロモート
 
-## 環境固有リソース
+```bash
+cd backend
+make deploy-dev      # または ./scripts/deploy.sh dev
+make deploy-staging
+make deploy-prod
+```
 
-リソースは環境ごとに名前空間化：
-- DynamoDBテーブル: `crypto-watch-data-{environment}`
-- Lambda関数: `crypto-watch-api-{environment}`、`crypto-watch-update-{environment}`
-- API Gateway: `crypto-watch-api-{environment}`
-- CloudWatch Log Groups: `/aws/lambda/crypto-watch-api-{environment}`
+API変更時:
+- バックエンドを先にデプロイ（後方互換性維持）
+- 破壊的変更は避ける（APIバージョニング未実装）
+- ロールバック手順を準備（`backend/docs/ROLLBACK_VERIFICATION.md`）
 
-## ドキュメントファイル
+## 参照ドキュメント
 
-バックエンドには実装を文書化する広範なタスクサマリーが含まれています：
-- `TASK_*_SUMMARY.md` - 個別タスク完了レポート
-- `IMPLEMENTATION_COMPLETE.md` - 全体的な実装ステータス
-- `STRUCTURE.md` - 詳細な構造ドキュメント
-- `SETUP.md` - セットアップ手順
+- `backend/README.md` - API仕様とセットアップ
+- `backend/docs/API_KEY_MANAGEMENT.md` - APIキー管理
+- `backend/docs/STAGING_TO_PROD_PROMOTION.md` - プロモーション手順
