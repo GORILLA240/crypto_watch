@@ -1,6 +1,26 @@
 import 'package:flutter/material.dart';
+import 'core/routing/app_router.dart';
+import 'core/services/complication_service.dart';
+import 'core/services/notification_service.dart';
+import 'core/theme/app_theme.dart';
+import 'core/utils/performance_utils.dart';
+import 'injection_container.dart' as di;
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // 依存性注入の初期化
+  await di.init();
+  
+  // パフォーマンス最適化の初期化
+  ImageCacheConfig.optimizeImageCache();
+  
+  // 通知サービスの初期化
+  await NotificationService().initialize();
+  
+  // コンプリケーションサービスの初期化
+  await ComplicationService().initialize();
+  
   runApp(const CryptoWatchApp());
 }
 
@@ -11,51 +31,14 @@ class CryptoWatchApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Crypto Watch',
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: Colors.black,
-      ),
-      home: const PriceHomePage(),
-    );
-  }
-}
-
-class PriceHomePage extends StatefulWidget {
-  const PriceHomePage({super.key});
-
-  @override
-  State<PriceHomePage> createState() => _PriceHomePageState();
-}
-
-class _PriceHomePageState extends State<PriceHomePage> {
-  double? price;
-
-  Future<void> fetchPrice() async {
-    // TODO: 後でAPI呼び出しに差し替える
-    setState(() {
-      price = 1234567.0; // 仮の数字
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Crypto Watch')),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              price == null ? 'Press the button!' : 'BTC/JPY: ¥${price!.toStringAsFixed(0)}',
-              style: const TextStyle(fontSize: 24),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: fetchPrice,
-              child: const Text('Get Price'),
-            ),
-          ],
-        ),
-      ),
+      debugShowCheckedModeBanner: false,
+      
+      // テーマ設定
+      theme: AppTheme.darkTheme,
+      
+      // ルーティング設定
+      initialRoute: AppRoutes.priceList,
+      onGenerateRoute: AppRouter.generateRoute,
     );
   }
 }

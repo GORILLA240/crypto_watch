@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/api_constants.dart';
+import '../../../../core/routing/app_router.dart';
 import '../../../../injection_container.dart';
 import '../bloc/price_list_bloc.dart';
 import '../bloc/price_list_event.dart';
@@ -52,9 +53,21 @@ class _PriceListPageContent extends StatelessWidget {
             },
           ),
           IconButton(
+            icon: const Icon(Icons.star, color: Colors.white),
+            onPressed: () {
+              AppRouter.navigateTo(context, AppRoutes.favorites);
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.notifications, color: Colors.white),
+            onPressed: () {
+              AppRouter.navigateTo(context, AppRoutes.alerts);
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.settings, color: Colors.white),
             onPressed: () {
-              // TODO: Navigate to settings
+              AppRouter.navigateTo(context, AppRoutes.settings);
             },
           ),
         ],
@@ -95,12 +108,22 @@ class _PriceListPageContent extends StatelessWidget {
               backgroundColor: Colors.grey[900],
               child: ListView.builder(
                 itemCount: prices.length,
+                // パフォーマンス最適化: アイテムの高さを指定
+                itemExtent: null,
+                // パフォーマンス最適化: キャッシュ範囲を設定
+                cacheExtent: 100,
                 itemBuilder: (context, index) {
                   final price = prices[index];
                   return PriceListItem(
+                    // パフォーマンス最適化: 一意のキーを設定
+                    key: ValueKey(price.symbol),
                     price: price,
                     onTap: () {
-                      // TODO: Navigate to detail page
+                      AppRouter.navigateTo(
+                        context,
+                        AppRoutes.priceDetail,
+                        arguments: price.symbol,
+                      );
                     },
                   );
                 },

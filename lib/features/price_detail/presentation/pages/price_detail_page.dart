@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/routing/app_router.dart';
 import '../widgets/price_stats.dart';
 
 /// 価格詳細画面
@@ -42,13 +43,13 @@ class _PriceDetailPageState extends State<PriceDetailPage> {
           IconButton(
             icon: const Icon(Icons.favorite_border, color: Colors.white),
             onPressed: () {
-              // TODO: Add to favorites
+              AppRouter.navigateTo(context, AppRoutes.favorites);
             },
           ),
           IconButton(
             icon: const Icon(Icons.notifications_outlined, color: Colors.white),
             onPressed: () {
-              // TODO: Set alert
+              AppRouter.navigateTo(context, AppRoutes.alerts);
             },
           ),
         ],
