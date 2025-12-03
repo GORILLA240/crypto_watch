@@ -50,7 +50,7 @@ final sl = GetIt.instance;
 Future<void> init() async {
   //! Features - Price List
   // Bloc
-  sl.registerFactory(
+  sl.registerLazySingleton(
     () => PriceListBloc(
       getPrices: sl(),
       refreshPrices: sl(),
@@ -132,7 +132,7 @@ Future<void> init() async {
 
   //! Features - Settings
   // Bloc
-  sl.registerFactory(
+  sl.registerLazySingleton(
     () => SettingsBloc(
       getSettings: sl(),
       updateSettings: sl(),

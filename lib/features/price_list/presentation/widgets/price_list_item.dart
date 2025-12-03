@@ -20,6 +20,15 @@ class PriceListItem extends StatelessWidget {
     final isPositive = price.change24h >= 0;
     final changeColor = isPositive ? Colors.green : Colors.red;
 
+    // 価格をUSDから指定通貨に換算
+    // BTC換算は現時点では未対応（BTC価格の取得が必要）
+    final effectiveCurrency = displayCurrency == 'BTC' ? 'USD' : displayCurrency;
+    final convertedPrice = CurrencyFormatter.convert(
+      price.price,
+      fromCurrency: 'USD',
+      toCurrency: effectiveCurrency,
+    );
+
     return InkWell(
       onTap: onTap,
       child: Container(
@@ -67,8 +76,8 @@ class PriceListItem extends StatelessWidget {
               flex: 2,
               child: Text(
                 CurrencyFormatter.format(
-                  price.price,
-                  currency: displayCurrency,
+                  convertedPrice,
+                  currency: effectiveCurrency,
                 ),
                 style: const TextStyle(
                   color: Colors.white,

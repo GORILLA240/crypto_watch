@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/routing/app_router.dart';
+import '../../../../core/utils/currency_formatter.dart';
+import '../../../price_list/domain/entities/crypto_price.dart';
+import '../../../price_list/presentation/bloc/price_list_bloc.dart';
+import '../../../price_list/presentation/bloc/price_list_state.dart';
+import '../../../settings/presentation/bloc/settings_bloc.dart';
+import '../../../settings/presentation/bloc/settings_state.dart';
 import '../widgets/price_stats.dart';
 
 /// 価格詳細画面
@@ -20,126 +27,196 @@ class _PriceDetailPageState extends State<PriceDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    // TODO: Implement with Bloc
-    // For now, showing placeholder UI
     return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        title: Text(
-          widget.symbol,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
         backgroundColor: Colors.black,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.favorite_border, color: Colors.white),
-            onPressed: () {
-              AppRouter.navigateTo(context, AppRoutes.favorites);
-            },
+        appBar: AppBar(
+          title: Text(
+            widget.symbol,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-            onPressed: () {
-              AppRouter.navigateTo(context, AppRoutes.alerts);
-            },
+          backgroundColor: Colors.black,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () => Navigator.of(context).pop(),
           ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Price display
-            const Center(
-              child: Column(
-                children: [
-                  Text(
-                    '¥5,000,000',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 48,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    '+2.5%',
-                    style: TextStyle(
-                      color: Colors.green,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.favorite_border, color: Colors.white),
+              onPressed: () {
+                AppRouter.navigateTo(context, AppRoutes.favorites);
+              },
             ),
-            const SizedBox(height: 32),
-            // Chart period selector
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: ['1H', '24H', '7D'].map((period) {
-                final isSelected = _selectedPeriod == period;
-                return TextButton(
-                  onPressed: () {
-                    setState(() {
-                      _selectedPeriod = period;
-                    });
-                  },
-                  style: TextButton.styleFrom(
-                    backgroundColor:
-                        isSelected ? Colors.blue : Colors.transparent,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 12,
-                    ),
-                  ),
-                  child: Text(
-                    period,
-                    style: TextStyle(
-                      color: isSelected ? Colors.white : Colors.grey,
-                      fontSize: 16,
-                      fontWeight:
-                          isSelected ? FontWeight.bold : FontWeight.normal,
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 16),
-            // Chart placeholder
-            Container(
-              height: 200,
-              decoration: BoxDecoration(
-                color: Colors.grey[900],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Center(
-                child: Text(
-                  'チャートデータを読み込み中...',
-                  style: TextStyle(color: Colors.grey),
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            // Stats
-            const PriceStats(
-              high24h: 5200000,
-              low24h: 4800000,
-              volume24h: 1000000000,
+            IconButton(
+              icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+              onPressed: () {
+                AppRouter.navigateTo(context, AppRoutes.alerts);
+              },
             ),
           ],
         ),
-      ),
-    );
+        body: BlocBuilder<PriceListBloc, PriceListState>(
+          builder: (context, priceState) {
+            if (priceState is! PriceListLoaded && priceState is! PriceListRefreshing) {
+              return const Center(
+                child: CircularProgressIndicator(color: Colors.white),
+              );
+            }
+
+            final prices = priceState is PriceListLoaded
+                ? priceState.prices
+                : (priceState as PriceListRefreshing).prices;
+
+            // シンボルに一致する価格を検索
+            CryptoPrice? foundPrice;
+            try {
+              foundPrice = prices.firstWhere((p) => p.symbol == widget.symbol);
+            } catch (e) {
+              // 見つからない場合は最初の価格を使用
+              foundPrice = prices.isNotEmpty ? prices.first : null;
+            }
+
+            if (foundPrice == null) {
+              return const Center(
+                child: Text(
+                  '価格データが見つかりません',
+                  style: TextStyle(color: Colors.white, fontSize: 18),
+                ),
+              );
+            }
+
+            // null チェック後、non-nullable変数に代入
+            final price = foundPrice;
+
+            return BlocBuilder<SettingsBloc, SettingsState>(
+              builder: (context, settingsState) {
+                final displayCurrency = settingsState is SettingsLoaded
+                    ? settingsState.settings.displayCurrency.code
+                    : 'JPY';
+
+                final isPositive = price.change24h >= 0;
+                final changeColor = isPositive ? Colors.green : Colors.red;
+
+                // BTC換算は現時点では未対応
+                final effectiveCurrency = displayCurrency == 'BTC' ? 'USD' : displayCurrency;
+
+                // 価格をUSDから指定通貨に換算
+                final convertedPrice = CurrencyFormatter.convert(
+                  price.price,
+                  fromCurrency: 'USD',
+                  toCurrency: effectiveCurrency,
+                );
+
+                // 24時間の高値・安値を計算（仮の計算）
+                final high24h = CurrencyFormatter.convert(
+                  price.price * 1.04,
+                  fromCurrency: 'USD',
+                  toCurrency: effectiveCurrency,
+                );
+                final low24h = CurrencyFormatter.convert(
+                  price.price * 0.96,
+                  fromCurrency: 'USD',
+                  toCurrency: effectiveCurrency,
+                );
+
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Price display
+                      Center(
+                        child: Column(
+                          children: [
+                            Text(
+                              CurrencyFormatter.format(
+                                convertedPrice,
+                                currency: effectiveCurrency,
+                              ),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 48,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              CurrencyFormatter.formatChangePercent(price.change24h),
+                              style: TextStyle(
+                                color: changeColor,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      // Chart period selector
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: ['1H', '24H', '7D'].map((period) {
+                          final isSelected = _selectedPeriod == period;
+                          return TextButton(
+                            onPressed: () {
+                              setState(() {
+                                _selectedPeriod = period;
+                              });
+                            },
+                            style: TextButton.styleFrom(
+                              backgroundColor:
+                                  isSelected ? Colors.blue : Colors.transparent,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 12,
+                              ),
+                            ),
+                            child: Text(
+                              period,
+                              style: TextStyle(
+                                color: isSelected ? Colors.white : Colors.grey,
+                                fontSize: 16,
+                                fontWeight:
+                                    isSelected ? FontWeight.bold : FontWeight.normal,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 16),
+                      // Chart placeholder
+                      Container(
+                        height: 200,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[900],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Center(
+                          child: Text(
+                            'チャートデータを読み込み中...',
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      // Stats - 24時間の高値・安値・出来高
+                      PriceStats(
+                        high24h: high24h,
+                        low24h: low24h,
+                        volume24h: price.marketCap * 0.1, // 仮の計算: 時価総額の10%
+                        displayCurrency: effectiveCurrency,
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      );
   }
 }

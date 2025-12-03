@@ -84,6 +84,7 @@ class CurrencyFormatter {
   }
 
   /// 通貨間の変換
+  /// 注意: バックエンドAPIから返される価格はUSD建てと仮定
   static double convert(
     double amount, {
     required String fromCurrency,
@@ -119,28 +120,30 @@ class CurrencyFormatter {
 
   /// 指定通貨からUSDに変換
   static double _convertToUsd(double amount, String currency) {
-    final rate = AppConstants.exchangeRates[currency];
-    if (rate == null) {
-      throw ArgumentError('サポートされていない通貨: $currency');
+    switch (currency) {
+      case 'USD':
+        return amount;
+      case 'JPY':
+        return amount / 150.0; // 1 USD = 150 JPY（仮の為替レート）
+      case 'EUR':
+        return amount / 0.92; // 1 USD = 0.92 EUR（仮の為替レート）
+      default:
+        throw ArgumentError('サポートされていない通貨: $currency');
     }
-    // JPYの場合、レートは1.0なので、実際のUSD換算レートで割る必要がある
-    if (currency == 'JPY') {
-      return amount / 150.0; // 仮の為替レート（実際はAPIから取得）
-    }
-    return amount / rate;
   }
 
   /// USDから指定通貨に変換
   static double _convertFromUsd(double usdAmount, String currency) {
-    final rate = AppConstants.exchangeRates[currency];
-    if (rate == null) {
-      throw ArgumentError('サポートされていない通貨: $currency');
+    switch (currency) {
+      case 'USD':
+        return usdAmount;
+      case 'JPY':
+        return usdAmount * 150.0; // 1 USD = 150 JPY（仮の為替レート）
+      case 'EUR':
+        return usdAmount * 0.92; // 1 USD = 0.92 EUR（仮の為替レート）
+      default:
+        throw ArgumentError('サポートされていない通貨: $currency');
     }
-    // JPYの場合
-    if (currency == 'JPY') {
-      return usdAmount * 150.0; // 仮の為替レート（実際はAPIから取得）
-    }
-    return usdAmount * rate;
   }
 
   /// デフォルトの小数点以下桁数を取得

@@ -1,4 +1,5 @@
 import '../../domain/entities/app_settings.dart';
+import '../../../../core/utils/display_density.dart';
 
 /// アプリ設定モデル
 class SettingsModel extends AppSettings {
@@ -7,6 +8,7 @@ class SettingsModel extends AppSettings {
     required super.autoRefreshEnabled,
     required super.refreshIntervalSeconds,
     required super.notificationsEnabled,
+    required super.displayDensity,
   });
 
   factory SettingsModel.fromJson(Map<String, dynamic> json) {
@@ -18,6 +20,9 @@ class SettingsModel extends AppSettings {
         autoRefreshEnabled: json['auto_refresh_enabled'] as bool? ?? true,
         refreshIntervalSeconds: json['refresh_interval_seconds'] as int? ?? 30,
         notificationsEnabled: json['notifications_enabled'] as bool? ?? true,
+        displayDensity: DisplayDensity.fromString(
+          json['display_density'] as String? ?? 'standard',
+        ),
       );
     } catch (e) {
       throw FormatException('Failed to parse SettingsModel from JSON: $e');
@@ -30,6 +35,7 @@ class SettingsModel extends AppSettings {
       'auto_refresh_enabled': autoRefreshEnabled,
       'refresh_interval_seconds': refreshIntervalSeconds,
       'notifications_enabled': notificationsEnabled,
+      'display_density': displayDensity.toStringValue(),
     };
   }
 
@@ -39,6 +45,7 @@ class SettingsModel extends AppSettings {
       autoRefreshEnabled: entity.autoRefreshEnabled,
       refreshIntervalSeconds: entity.refreshIntervalSeconds,
       notificationsEnabled: entity.notificationsEnabled,
+      displayDensity: entity.displayDensity,
     );
   }
 
@@ -48,6 +55,7 @@ class SettingsModel extends AppSettings {
       autoRefreshEnabled: autoRefreshEnabled,
       refreshIntervalSeconds: refreshIntervalSeconds,
       notificationsEnabled: notificationsEnabled,
+      displayDensity: displayDensity,
     );
   }
 
@@ -57,6 +65,7 @@ class SettingsModel extends AppSettings {
       autoRefreshEnabled: true,
       refreshIntervalSeconds: 30,
       notificationsEnabled: true,
+      displayDensity: DisplayDensity.standard,
     );
   }
 
@@ -66,12 +75,14 @@ class SettingsModel extends AppSettings {
     bool? autoRefreshEnabled,
     int? refreshIntervalSeconds,
     bool? notificationsEnabled,
+    DisplayDensity? displayDensity,
   }) {
     return SettingsModel(
       displayCurrency: displayCurrency ?? this.displayCurrency,
       autoRefreshEnabled: autoRefreshEnabled ?? this.autoRefreshEnabled,
       refreshIntervalSeconds: refreshIntervalSeconds ?? this.refreshIntervalSeconds,
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
+      displayDensity: displayDensity ?? this.displayDensity,
     );
   }
 }

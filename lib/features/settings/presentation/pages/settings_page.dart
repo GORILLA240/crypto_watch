@@ -12,10 +12,8 @@ class SettingsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => sl<SettingsBloc>()..add(const LoadSettingsEvent()),
-      child: const _SettingsPageContent(),
-    );
+    // グローバルなSettingsBlocを使用
+    return const _SettingsPageContent();
   }
 }
 

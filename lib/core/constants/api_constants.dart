@@ -58,8 +58,8 @@ class ApiConstants {
   static const List<String> defaultSymbols = [
     'BTC',
     'ETH',
-    'ADA',
-    'BNB',
     'XRP',
+    'BNB',
+    'SOL',
   ];
 }

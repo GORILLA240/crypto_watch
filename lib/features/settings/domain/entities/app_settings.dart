@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../../../core/utils/display_density.dart';
 
 /// 通貨の列挙型
 enum Currency {
@@ -24,12 +25,14 @@ class AppSettings extends Equatable {
   final bool autoRefreshEnabled;
   final int refreshIntervalSeconds;
   final bool notificationsEnabled;
+  final DisplayDensity displayDensity;
 
   const AppSettings({
     required this.displayCurrency,
     required this.autoRefreshEnabled,
     required this.refreshIntervalSeconds,
     required this.notificationsEnabled,
+    required this.displayDensity,
   });
 
   /// デフォルト設定
@@ -39,6 +42,7 @@ class AppSettings extends Equatable {
       autoRefreshEnabled: true,
       refreshIntervalSeconds: 30,
       notificationsEnabled: true,
+      displayDensity: DisplayDensity.standard,
     );
   }
 
@@ -48,6 +52,7 @@ class AppSettings extends Equatable {
         autoRefreshEnabled,
         refreshIntervalSeconds,
         notificationsEnabled,
+        displayDensity,
       ];
 
   AppSettings copyWith({
@@ -55,12 +60,14 @@ class AppSettings extends Equatable {
     bool? autoRefreshEnabled,
     int? refreshIntervalSeconds,
     bool? notificationsEnabled,
+    DisplayDensity? displayDensity,
   }) {
     return AppSettings(
       displayCurrency: displayCurrency ?? this.displayCurrency,
       autoRefreshEnabled: autoRefreshEnabled ?? this.autoRefreshEnabled,
       refreshIntervalSeconds: refreshIntervalSeconds ?? this.refreshIntervalSeconds,
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
+      displayDensity: displayDensity ?? this.displayDensity,
     );
   }
 
@@ -69,6 +76,7 @@ class AppSettings extends Equatable {
     return 'AppSettings(displayCurrency: ${displayCurrency.code}, '
         'autoRefreshEnabled: $autoRefreshEnabled, '
         'refreshIntervalSeconds: $refreshIntervalSeconds, '
-        'notificationsEnabled: $notificationsEnabled)';
+        'notificationsEnabled: $notificationsEnabled, '
+        'displayDensity: ${displayDensity.name})';
   }
 }

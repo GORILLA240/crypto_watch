@@ -3,6 +3,7 @@ import 'package:crypto_watch/features/settings/data/datasources/settings_local_d
 import 'package:crypto_watch/features/settings/data/models/settings_model.dart';
 import 'package:crypto_watch/features/settings/domain/entities/app_settings.dart';
 import 'package:crypto_watch/core/storage/local_storage.dart';
+import 'package:crypto_watch/core/utils/display_density.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -36,6 +37,7 @@ void main() {
               autoRefreshEnabled: testCase % 2 == 0,
               refreshIntervalSeconds: 30 + (testCase % 5) * 10,
               notificationsEnabled: testCase % 3 != 0,
+              displayDensity: DisplayDensity.standard,
             );
 
             // 保存
@@ -69,14 +71,16 @@ void main() {
         expect(settings.autoRefreshEnabled, isTrue);
         expect(settings.refreshIntervalSeconds, 30);
         expect(settings.notificationsEnabled, isTrue);
+        expect(settings.displayDensity, DisplayDensity.standard);
       });
 
       test('保存された設定を正しく読み込む', () async {
-        final testSettings = const SettingsModel(
+        const testSettings = SettingsModel(
           displayCurrency: Currency.usd,
           autoRefreshEnabled: false,
           refreshIntervalSeconds: 60,
           notificationsEnabled: false,
+          displayDensity: DisplayDensity.compact,
         );
 
         await dataSource.saveSettings(testSettings);
@@ -86,16 +90,18 @@ void main() {
         expect(loaded.autoRefreshEnabled, isFalse);
         expect(loaded.refreshIntervalSeconds, 60);
         expect(loaded.notificationsEnabled, isFalse);
+        expect(loaded.displayDensity, DisplayDensity.compact);
       });
     });
 
     group('saveSettings', () {
       test('設定を保存できる', () async {
-        final settings = const SettingsModel(
+        const settings = SettingsModel(
           displayCurrency: Currency.eur,
           autoRefreshEnabled: true,
           refreshIntervalSeconds: 45,
           notificationsEnabled: true,
+          displayDensity: DisplayDensity.maximum,
         );
 
         await dataSource.saveSettings(settings);
@@ -103,21 +109,24 @@ void main() {
 
         expect(loaded.displayCurrency, Currency.eur);
         expect(loaded.refreshIntervalSeconds, 45);
+        expect(loaded.displayDensity, DisplayDensity.maximum);
       });
 
       test('設定を上書きできる', () async {
-        final settings1 = const SettingsModel(
+        const settings1 = SettingsModel(
           displayCurrency: Currency.jpy,
           autoRefreshEnabled: true,
           refreshIntervalSeconds: 30,
           notificationsEnabled: true,
+          displayDensity: DisplayDensity.standard,
         );
 
-        final settings2 = const SettingsModel(
+        const settings2 = SettingsModel(
           displayCurrency: Currency.btc,
           autoRefreshEnabled: false,
           refreshIntervalSeconds: 90,
           notificationsEnabled: false,
+          displayDensity: DisplayDensity.compact,
         );
 
         await dataSource.saveSettings(settings1);
@@ -128,16 +137,18 @@ void main() {
         expect(loaded.autoRefreshEnabled, isFalse);
         expect(loaded.refreshIntervalSeconds, 90);
         expect(loaded.notificationsEnabled, isFalse);
+        expect(loaded.displayDensity, DisplayDensity.compact);
       });
     });
 
     group('resetSettings', () {
       test('設定をデフォルトにリセットできる', () async {
-        final customSettings = const SettingsModel(
+        const customSettings = SettingsModel(
           displayCurrency: Currency.usd,
           autoRefreshEnabled: false,
           refreshIntervalSeconds: 120,
           notificationsEnabled: false,
+          displayDensity: DisplayDensity.maximum,
         );
 
         await dataSource.saveSettings(customSettings);
@@ -148,6 +159,7 @@ void main() {
         expect(loaded.autoRefreshEnabled, isTrue);
         expect(loaded.refreshIntervalSeconds, 30);
         expect(loaded.notificationsEnabled, isTrue);
+        expect(loaded.displayDensity, DisplayDensity.standard);
       });
     });
   });

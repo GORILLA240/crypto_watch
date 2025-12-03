@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/routing/app_router.dart';
-import '../../../../injection_container.dart';
+import '../../../settings/presentation/bloc/settings_bloc.dart';
+import '../../../settings/presentation/bloc/settings_state.dart';
 import '../bloc/price_list_bloc.dart';
 import '../bloc/price_list_event.dart';
 import '../bloc/price_list_state.dart';
@@ -16,14 +17,8 @@ class PriceListPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => sl<PriceListBloc>()
-        ..add(const LoadPricesEvent(
-          symbols: ApiConstants.defaultSymbols,
-        ))
-        ..startAutoRefresh(),
-      child: const _PriceListPageContent(),
-    );
+    // グローバルなPriceListBlocを使用
+    return const _PriceListPageContent();
   }
 }
 
@@ -98,36 +93,45 @@ class _PriceListPageContent extends StatelessWidget {
                 ? state.prices
                 : (state as PriceListRefreshing).prices;
 
-            return RefreshIndicator(
-              onRefresh: () async {
-                context.read<PriceListBloc>().add(const RefreshPricesEvent());
-                // Wait a bit for the refresh to complete
-                await Future.delayed(const Duration(seconds: 1));
-              },
-              color: Colors.white,
-              backgroundColor: Colors.grey[900],
-              child: ListView.builder(
-                itemCount: prices.length,
-                // パフォーマンス最適化: アイテムの高さを指定
-                itemExtent: null,
-                // パフォーマンス最適化: キャッシュ範囲を設定
-                cacheExtent: 100,
-                itemBuilder: (context, index) {
-                  final price = prices[index];
-                  return PriceListItem(
-                    // パフォーマンス最適化: 一意のキーを設定
-                    key: ValueKey(price.symbol),
-                    price: price,
-                    onTap: () {
-                      AppRouter.navigateTo(
-                        context,
-                        AppRoutes.priceDetail,
-                        arguments: price.symbol,
+            return BlocBuilder<SettingsBloc, SettingsState>(
+              builder: (context, settingsState) {
+                final displayCurrency = settingsState is SettingsLoaded
+                    ? settingsState.settings.displayCurrency.code
+                    : 'JPY';
+
+                return RefreshIndicator(
+                  onRefresh: () async {
+                    context.read<PriceListBloc>().add(const RefreshPricesEvent());
+                    // Wait a bit for the refresh to complete
+                    await Future.delayed(const Duration(seconds: 1));
+                  },
+                  color: Colors.white,
+                  backgroundColor: Colors.grey[900],
+                  child: ListView.builder(
+                    itemCount: prices.length,
+                    // パフォーマンス最適化: アイテムの高さを指定
+                    itemExtent: null,
+                    // パフォーマンス最適化: キャッシュ範囲を設定
+                    cacheExtent: 100,
+                    itemBuilder: (context, index) {
+                      final price = prices[index];
+                      return PriceListItem(
+                        // パフォーマンス最適化: 一意のキーを設定
+                        key: ValueKey(price.symbol),
+                        price: price,
+                        displayCurrency: displayCurrency,
+                        onTap: () {
+                          AppRouter.navigateTo(
+                            context,
+                            AppRoutes.priceDetail,
+                            arguments: price.symbol,
+                          );
+                        },
                       );
                     },
-                  );
-                },
-              ),
+                  ),
+                );
+              },
             );
           }
 

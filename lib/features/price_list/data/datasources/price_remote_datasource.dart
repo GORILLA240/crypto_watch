@@ -30,7 +30,28 @@ class PriceRemoteDataSourceImpl implements PriceRemoteDataSource {
         queryParameters: {'symbols': symbolsParam},
       );
 
-      return _parsePricesResponse(response);
+      final prices = _parsePricesResponse(response);
+      
+      // リクエストされた順序でソート
+      final sortedPrices = <CryptoPriceModel>[];
+      for (final symbol in symbols) {
+        try {
+          final price = prices.firstWhere((p) => p.symbol == symbol);
+          sortedPrices.add(price);
+        } catch (e) {
+          // シンボルが見つからない場合はスキップ
+          continue;
+        }
+      }
+      
+      // 見つからなかったシンボルがある場合は、残りを追加
+      for (final price in prices) {
+        if (!sortedPrices.any((p) => p.symbol == price.symbol)) {
+          sortedPrices.add(price);
+        }
+      }
+      
+      return sortedPrices;
     } on AppException {
       rethrow;
     } catch (e) {
@@ -50,7 +71,29 @@ class PriceRemoteDataSourceImpl implements PriceRemoteDataSource {
         ApiConstants.pricesEndpoint,
         queryParameters: {'symbols': symbolsParam},
       );
-      return _parsePricesResponse(response);
+      
+      final prices = _parsePricesResponse(response);
+      
+      // デフォルトの順序でソート
+      final sortedPrices = <CryptoPriceModel>[];
+      for (final symbol in ApiConstants.defaultSymbols) {
+        try {
+          final price = prices.firstWhere((p) => p.symbol == symbol);
+          sortedPrices.add(price);
+        } catch (e) {
+          // シンボルが見つからない場合はスキップ
+          continue;
+        }
+      }
+      
+      // 見つからなかったシンボルがある場合は、残りを追加
+      for (final price in prices) {
+        if (!sortedPrices.any((p) => p.symbol == price.symbol)) {
+          sortedPrices.add(price);
+        }
+      }
+      
+      return sortedPrices;
     } on AppException {
       rethrow;
     } catch (e) {
