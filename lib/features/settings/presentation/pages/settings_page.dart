@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../injection_container.dart';
+import '../../../../core/utils/display_density.dart';
 import '../bloc/settings_bloc.dart';
 import '../bloc/settings_event.dart';
 import '../bloc/settings_state.dart';
@@ -106,8 +106,28 @@ class _SettingsPageContent extends StatelessWidget {
                             UpdateSettingsEvent(settings: updatedSettings),
                           );
                     },
-                    activeColor: Colors.blue,
+                    activeTrackColor: Colors.blue,
                   ),
+                  const SizedBox(height: 32),
+                  // Display density selector
+                  const Text(
+                    '表示密度',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    '1画面に表示される銘柄の数を調整します',
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildDisplayDensitySelector(context, state.settings),
                   const SizedBox(height: 32),
                   // Notifications toggle
                   const Text(
@@ -137,7 +157,7 @@ class _SettingsPageContent extends StatelessWidget {
                             UpdateSettingsEvent(settings: updatedSettings),
                           );
                     },
-                    activeColor: Colors.blue,
+                    activeTrackColor: Colors.blue,
                   ),
                 ],
               ),
@@ -146,6 +166,87 @@ class _SettingsPageContent extends StatelessWidget {
 
           return const SizedBox.shrink();
         },
+      ),
+    );
+  }
+
+  Widget _buildDisplayDensitySelector(BuildContext context, settings) {
+    return Column(
+      children: [
+        _buildDensityOption(
+          context,
+          settings,
+          DisplayDensity.standard,
+          '標準',
+          '3〜5銘柄/画面',
+        ),
+        const SizedBox(height: 8),
+        _buildDensityOption(
+          context,
+          settings,
+          DisplayDensity.compact,
+          'コンパクト',
+          '6〜8銘柄/画面',
+        ),
+        const SizedBox(height: 8),
+        _buildDensityOption(
+          context,
+          settings,
+          DisplayDensity.maximum,
+          '最大',
+          '9〜12銘柄/画面',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDensityOption(
+    BuildContext context,
+    settings,
+    DisplayDensity density,
+    String label,
+    String description,
+  ) {
+    final isSelected = settings.displayDensity == density;
+    return Container(
+      decoration: BoxDecoration(
+        color: isSelected ? Colors.blue.withValues(alpha: 0.2) : Colors.grey[900],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isSelected ? Colors.blue : Colors.grey[800]!,
+          width: 2,
+        ),
+      ),
+      child: RadioListTile<DisplayDensity>(
+        value: density,
+        groupValue: settings.displayDensity,
+        onChanged: (value) {
+          if (value != null) {
+            final updatedSettings = settings.copyWith(
+              displayDensity: value,
+            );
+            context.read<SettingsBloc>().add(
+                  UpdateSettingsEvent(settings: updatedSettings),
+                );
+          }
+        },
+        activeColor: Colors.blue,
+        title: Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        subtitle: Text(
+          description,
+          style: const TextStyle(
+            color: Colors.grey,
+            fontSize: 14,
+          ),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       ),
     );
   }

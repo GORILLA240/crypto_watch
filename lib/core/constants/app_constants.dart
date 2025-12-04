@@ -45,6 +45,7 @@ class AppConstants {
   static const String displayCurrencyKey = 'display_currency';
   static const String autoRefreshEnabledKey = 'auto_refresh_enabled';
   static const String notificationsEnabledKey = 'notifications_enabled';
+  static const String priceListOrderKey = 'price_list_order';
 
   // 通貨設定
   static const List<String> supportedCurrencies = ['JPY', 'USD', 'EUR', 'BTC'];

@@ -63,6 +63,112 @@ void main() {
       );
     });
 
+    group('Property 2: 表示密度設定の永続化', () {
+      test(
+        '**Feature: price-list-improvements, Property 2: 表示密度の制約**（永続化部分） - '
+        '**Validates: 要件 2.7, 9.2** - '
+        '表示密度を保存し、読み込んだ後も同じ値であることを確認',
+        () async {
+          // Property-based test: すべての表示密度で永続性を検証
+          final densities = [
+            DisplayDensity.standard,
+            DisplayDensity.compact,
+            DisplayDensity.maximum,
+          ];
+          final currencies = [Currency.jpy, Currency.usd, Currency.eur, Currency.btc];
+
+          // 100回のイテレーションで様々な組み合わせをテスト
+          for (var testCase = 0; testCase < 100; testCase++) {
+            // テストケースごとにストレージをクリア
+            await localStorage.clear();
+
+            // ランダムな設定を生成（表示密度を含む）
+            final originalSettings = SettingsModel(
+              displayCurrency: currencies[testCase % currencies.length],
+              autoRefreshEnabled: testCase % 2 == 0,
+              refreshIntervalSeconds: 30 + (testCase % 5) * 10,
+              notificationsEnabled: testCase % 3 != 0,
+              displayDensity: densities[testCase % densities.length],
+            );
+
+            // 保存
+            await dataSource.saveSettings(originalSettings);
+
+            // 新しいデータソースインスタンスを作成（アプリ再起動をシミュレート）
+            final newDataSource = SettingsLocalDataSourceImpl(localStorage: localStorage);
+
+            // 再読み込み
+            final loadedSettings = await newDataSource.getSettings();
+
+            // 表示密度が一致することを検証
+            expect(
+              loadedSettings.displayDensity,
+              originalSettings.displayDensity,
+              reason: '表示密度が一致すべき: 保存=${originalSettings.displayDensity.name}, '
+                  '読み込み=${loadedSettings.displayDensity.name}',
+            );
+
+            // 他の設定も一致することを確認（完全性チェック）
+            expect(loadedSettings.displayCurrency, originalSettings.displayCurrency,
+                reason: '表示通貨が一致すべき');
+            expect(loadedSettings.autoRefreshEnabled, originalSettings.autoRefreshEnabled,
+                reason: '自動更新設定が一致すべき');
+            expect(loadedSettings.refreshIntervalSeconds, originalSettings.refreshIntervalSeconds,
+                reason: '更新間隔が一致すべき');
+            expect(loadedSettings.notificationsEnabled, originalSettings.notificationsEnabled,
+                reason: '通知設定が一致すべき');
+          }
+        },
+      );
+
+      test(
+        '表示密度のみを変更した場合も永続化される',
+        () async {
+          // 初期設定を保存
+          const initialSettings = SettingsModel(
+            displayCurrency: Currency.jpy,
+            autoRefreshEnabled: true,
+            refreshIntervalSeconds: 30,
+            notificationsEnabled: true,
+            displayDensity: DisplayDensity.standard,
+          );
+          await dataSource.saveSettings(initialSettings);
+
+          // 各表示密度に変更して永続性を確認
+          final densities = [
+            DisplayDensity.compact,
+            DisplayDensity.maximum,
+            DisplayDensity.standard,
+          ];
+
+          for (final density in densities) {
+            final updatedSettings = initialSettings.copyWith(
+              displayDensity: density,
+            );
+
+            // 保存
+            await dataSource.saveSettings(updatedSettings);
+
+            // 再読み込み
+            final loadedSettings = await dataSource.getSettings();
+
+            // 表示密度が正しく保存・読み込みされることを確認
+            expect(
+              loadedSettings.displayDensity,
+              density,
+              reason: '表示密度 ${density.name} が正しく永続化されるべき',
+            );
+
+            // 他の設定は変更されていないことを確認
+            expect(loadedSettings.displayCurrency, initialSettings.displayCurrency);
+            expect(loadedSettings.autoRefreshEnabled, initialSettings.autoRefreshEnabled);
+            expect(loadedSettings.refreshIntervalSeconds, initialSettings.refreshIntervalSeconds);
+            expect(loadedSettings.notificationsEnabled, initialSettings.notificationsEnabled);
+          }
+        },
+      );
+    });
+
     group('getSettings', () {
       test('設定が存在しない場合はデフォルト設定を返す', () async {
         final settings = await dataSource.getSettings();

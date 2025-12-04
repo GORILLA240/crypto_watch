@@ -12,7 +12,7 @@ import 'package:crypto_watch/core/routing/app_router.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  setUpAll(() async {
+  setUp(() async {
     // SharedPreferencesのモックチャンネルを設定
     const MethodChannel('plugins.flutter.io/shared_preferences')
         .setMockMethodCallHandler((MethodCall methodCall) async {
@@ -31,7 +31,8 @@ void main() {
       return null;
     });
 
-    // 依存性注入の初期化
+    // 依存性注入をリセットして再初期化
+    await di.sl.reset();
     await di.init();
   });
 

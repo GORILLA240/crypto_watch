@@ -54,6 +54,10 @@ Future<void> init() async {
     () => PriceListBloc(
       getPrices: sl(),
       refreshPrices: sl(),
+      getFavorites: sl(),
+      addFavorite: sl(),
+      removeFavorite: sl(),
+      localStorage: sl(),
     ),
   );
 

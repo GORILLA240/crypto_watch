@@ -70,33 +70,40 @@ class DisplayDensityConfig {
 
 /// 表示密度ヘルパークラス
 class DisplayDensityHelper {
+  // パフォーマンス最適化: 設定をキャッシュ（要件 6.1）
+  static const _standardConfig = DisplayDensityConfig(
+    density: DisplayDensity.standard,
+    itemHeight: 80.0,
+    iconSize: 40.0,
+    fontSize: 18.0,
+    padding: 16.0,
+  );
+
+  static const _compactConfig = DisplayDensityConfig(
+    density: DisplayDensity.compact,
+    itemHeight: 60.0,
+    iconSize: 32.0,
+    fontSize: 16.0,
+    padding: 12.0,
+  );
+
+  static const _maximumConfig = DisplayDensityConfig(
+    density: DisplayDensity.maximum,
+    itemHeight: 48.0,
+    iconSize: 32.0,
+    fontSize: 14.0,
+    padding: 8.0,
+  );
+
   /// 表示密度に応じた設定を取得
   static DisplayDensityConfig getConfig(DisplayDensity density) {
     switch (density) {
       case DisplayDensity.standard:
-        return const DisplayDensityConfig(
-          density: DisplayDensity.standard,
-          itemHeight: 80.0,
-          iconSize: 40.0,
-          fontSize: 18.0,
-          padding: 16.0,
-        );
+        return _standardConfig;
       case DisplayDensity.compact:
-        return const DisplayDensityConfig(
-          density: DisplayDensity.compact,
-          itemHeight: 60.0,
-          iconSize: 32.0,
-          fontSize: 16.0,
-          padding: 12.0,
-        );
+        return _compactConfig;
       case DisplayDensity.maximum:
-        return const DisplayDensityConfig(
-          density: DisplayDensity.maximum,
-          itemHeight: 48.0,
-          iconSize: 32.0,
-          fontSize: 14.0,
-          padding: 8.0,
-        );
+        return _maximumConfig;
     }
   }
 

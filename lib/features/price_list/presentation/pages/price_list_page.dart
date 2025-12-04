@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/routing/app_router.dart';
+import '../../../../core/utils/display_density.dart';
 import '../../../settings/presentation/bloc/settings_bloc.dart';
 import '../../../settings/presentation/bloc/settings_state.dart';
+import '../../domain/entities/crypto_price.dart';
 import '../bloc/price_list_bloc.dart';
 import '../bloc/price_list_event.dart';
 import '../bloc/price_list_state.dart';
@@ -25,49 +27,133 @@ class PriceListPage extends StatelessWidget {
 class _PriceListPageContent extends StatelessWidget {
   const _PriceListPageContent();
 
+  /// カスタム順序を適用
+  List<CryptoPrice> _applyCustomOrder(
+    List<CryptoPrice> prices,
+    List<String> customOrder,
+  ) {
+    if (customOrder.isEmpty) return prices;
+
+    final priceMap = {for (var p in prices) p.symbol: p};
+    final ordered = <CryptoPrice>[];
+
+    // カスタム順序に従って並べる
+    for (final symbol in customOrder) {
+      if (priceMap.containsKey(symbol)) {
+        ordered.add(priceMap[symbol]!);
+        priceMap.remove(symbol);
+      }
+    }
+
+    // 残りを追加（新しく追加された通貨など）
+    ordered.addAll(priceMap.values);
+
+    return ordered;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        title: const Text(
-          'Crypto Watch',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
+    return BlocListener<PriceListBloc, PriceListState>(
+      listener: (context, state) {
+        // エラーメッセージがある場合はSnackBarで表示
+        if (state is PriceListLoaded && state.errorMessage != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.errorMessage!),
+              backgroundColor: Colors.red[700],
+              duration: const Duration(seconds: 3),
+              behavior: SnackBarBehavior.floating,
+              action: SnackBarAction(
+                label: '閉じる',
+                textColor: Colors.white,
+                onPressed: () {
+                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                  context.read<PriceListBloc>().add(const ClearErrorMessageEvent());
+                },
+              ),
+            ),
+          ).closed.then((_) {
+            // SnackBarが閉じられたらエラーメッセージをクリア
+            if (context.mounted) {
+              context.read<PriceListBloc>().add(const ClearErrorMessageEvent());
+            }
+          });
+        }
+      },
+      child: BlocBuilder<PriceListBloc, PriceListState>(
+        builder: (context, state) {
+          final isReorderMode = state is PriceListLoaded && state.isReorderMode;
+
+          return Scaffold(
+            backgroundColor: Colors.black,
+            appBar: AppBar(
+            title: Text(
+              isReorderMode ? '並び替えモード' : 'Crypto Watch',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            backgroundColor: Colors.black,
+            elevation: 0,
+            actions: [
+              if (!isReorderMode) ...[
+                IconButton(
+                  icon: const Icon(Icons.refresh, color: Colors.white),
+                  onPressed: () {
+                    context.read<PriceListBloc>().add(const RefreshPricesEvent());
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.star, color: Colors.white),
+                  onPressed: () {
+                    AppRouter.navigateTo(context, AppRoutes.favorites);
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.notifications, color: Colors.white),
+                  onPressed: () {
+                    AppRouter.navigateTo(context, AppRoutes.alerts);
+                  },
+                ),
+              ],
+              IconButton(
+                icon: Icon(
+                  isReorderMode ? Icons.check : Icons.reorder,
+                  color: Colors.white,
+                ),
+                onPressed: () {
+                  context.read<PriceListBloc>().add(const ToggleReorderModeEvent());
+                },
+              ),
+              if (!isReorderMode)
+                IconButton(
+                  icon: const Icon(Icons.settings, color: Colors.white),
+                  onPressed: () {
+                    AppRouter.navigateTo(context, AppRoutes.settings);
+                  },
+                ),
+            ],
           ),
-        ),
-        backgroundColor: Colors.black,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white),
-            onPressed: () {
-              context.read<PriceListBloc>().add(const RefreshPricesEvent());
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.star, color: Colors.white),
-            onPressed: () {
-              AppRouter.navigateTo(context, AppRoutes.favorites);
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.notifications, color: Colors.white),
-            onPressed: () {
-              AppRouter.navigateTo(context, AppRoutes.alerts);
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings, color: Colors.white),
-            onPressed: () {
-              AppRouter.navigateTo(context, AppRoutes.settings);
-            },
-          ),
-        ],
+            body: _buildBody(context, state),
+            floatingActionButton: isReorderMode
+                ? null
+                : FloatingActionButton(
+                    onPressed: () {
+                      context.read<PriceListBloc>().add(const RefreshPricesEvent());
+                    },
+                    backgroundColor: Colors.blue,
+                    child: const Icon(Icons.refresh, color: Colors.white),
+                  ),
+          );
+        },
       ),
-      body: BlocBuilder<PriceListBloc, PriceListState>(
+    );
+  }
+
+  Widget _buildBody(BuildContext context, PriceListState state) {
+    return BlocBuilder<PriceListBloc, PriceListState>(
         builder: (context, state) {
           if (state is PriceListLoading) {
             return const LoadingIndicator(
@@ -92,12 +178,27 @@ class _PriceListPageContent extends StatelessWidget {
             final prices = state is PriceListLoaded
                 ? state.prices
                 : (state as PriceListRefreshing).prices;
+            final favoriteSymbols = state is PriceListLoaded
+                ? state.favoriteSymbols.toSet()
+                : (state as PriceListRefreshing).favoriteSymbols.toSet();
+            final isReorderMode = state is PriceListLoaded
+                ? state.isReorderMode
+                : (state as PriceListRefreshing).isReorderMode;
+            final customOrder = state is PriceListLoaded
+                ? state.customOrder
+                : (state as PriceListRefreshing).customOrder;
+
+            // カスタム順序を適用
+            final orderedPrices = _applyCustomOrder(prices, customOrder);
 
             return BlocBuilder<SettingsBloc, SettingsState>(
               builder: (context, settingsState) {
                 final displayCurrency = settingsState is SettingsLoaded
                     ? settingsState.settings.displayCurrency.code
                     : 'JPY';
+                final displayDensity = settingsState is SettingsLoaded
+                    ? settingsState.settings.displayDensity
+                    : DisplayDensity.standard;
 
                 return RefreshIndicator(
                   onRefresh: () async {
@@ -107,29 +208,71 @@ class _PriceListPageContent extends StatelessWidget {
                   },
                   color: Colors.white,
                   backgroundColor: Colors.grey[900],
-                  child: ListView.builder(
-                    itemCount: prices.length,
-                    // パフォーマンス最適化: アイテムの高さを指定
-                    itemExtent: null,
-                    // パフォーマンス最適化: キャッシュ範囲を設定
-                    cacheExtent: 100,
-                    itemBuilder: (context, index) {
-                      final price = prices[index];
-                      return PriceListItem(
-                        // パフォーマンス最適化: 一意のキーを設定
-                        key: ValueKey(price.symbol),
-                        price: price,
-                        displayCurrency: displayCurrency,
-                        onTap: () {
-                          AppRouter.navigateTo(
-                            context,
-                            AppRoutes.priceDetail,
-                            arguments: price.symbol,
-                          );
-                        },
-                      );
-                    },
-                  ),
+                  child: isReorderMode
+                      ? ReorderableListView.builder(
+                          itemCount: orderedPrices.length,
+                          // パフォーマンス最適化: 固定高さを指定（要件 6.1）
+                          itemExtent: DisplayDensityHelper.getConfig(displayDensity).itemHeight,
+                          onReorder: (oldIndex, newIndex) {
+                            context.read<PriceListBloc>().add(
+                              ReorderPricesEvent(
+                                oldIndex: oldIndex,
+                                newIndex: newIndex,
+                              ),
+                            );
+                          },
+                          itemBuilder: (context, index) {
+                            final price = orderedPrices[index];
+                            final isFavorite = favoriteSymbols.contains(price.symbol);
+                            
+                            return PriceListItem(
+                              key: ValueKey(price.symbol),
+                              price: price,
+                              displayCurrency: displayCurrency,
+                              displayDensity: displayDensity,
+                              isFavorite: isFavorite,
+                              isReorderMode: isReorderMode,
+                              onTap: null, // 並び替えモード中はタップ無効
+                              onLongPress: () {
+                                context.read<PriceListBloc>().add(
+                                  ToggleFavoriteEvent(symbol: price.symbol),
+                                );
+                              },
+                            );
+                          },
+                        )
+                      : ListView.builder(
+                          itemCount: orderedPrices.length,
+                          // パフォーマンス最適化: 固定高さを指定（要件 6.1）
+                          itemExtent: DisplayDensityHelper.getConfig(displayDensity).itemHeight,
+                          // キャッシュ範囲を最適化
+                          cacheExtent: DisplayDensityHelper.getConfig(displayDensity).itemHeight * 3,
+                          itemBuilder: (context, index) {
+                            final price = orderedPrices[index];
+                            final isFavorite = favoriteSymbols.contains(price.symbol);
+                            
+                            return PriceListItem(
+                              key: ValueKey(price.symbol),
+                              price: price,
+                              displayCurrency: displayCurrency,
+                              displayDensity: displayDensity,
+                              isFavorite: isFavorite,
+                              isReorderMode: isReorderMode,
+                              onTap: () {
+                                AppRouter.navigateTo(
+                                  context,
+                                  AppRoutes.priceDetail,
+                                  arguments: price.symbol,
+                                );
+                              },
+                              onLongPress: () {
+                                context.read<PriceListBloc>().add(
+                                  ToggleFavoriteEvent(symbol: price.symbol),
+                                );
+                              },
+                            );
+                          },
+                        ),
                 );
               },
             );
@@ -142,14 +285,6 @@ class _PriceListPageContent extends StatelessWidget {
             ),
           );
         },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          context.read<PriceListBloc>().add(const RefreshPricesEvent());
-        },
-        backgroundColor: Colors.blue,
-        child: const Icon(Icons.refresh, color: Colors.white),
-      ),
-    );
+      );
   }
 }

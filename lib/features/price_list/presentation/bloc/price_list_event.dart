@@ -27,3 +27,37 @@ class RefreshPricesEvent extends PriceListEvent {
 class AutoRefreshEvent extends PriceListEvent {
   const AutoRefreshEvent();
 }
+
+/// お気に入りをトグルするイベント
+class ToggleFavoriteEvent extends PriceListEvent {
+  final String symbol;
+
+  const ToggleFavoriteEvent({required this.symbol});
+
+  @override
+  List<Object?> get props => [symbol];
+}
+
+/// 並び替えモードをトグルするイベント
+class ToggleReorderModeEvent extends PriceListEvent {
+  const ToggleReorderModeEvent();
+}
+
+/// 価格リストを並び替えるイベント
+class ReorderPricesEvent extends PriceListEvent {
+  final int oldIndex;
+  final int newIndex;
+
+  const ReorderPricesEvent({
+    required this.oldIndex,
+    required this.newIndex,
+  });
+
+  @override
+  List<Object?> get props => [oldIndex, newIndex];
+}
+
+/// エラーメッセージをクリアするイベント
+class ClearErrorMessageEvent extends PriceListEvent {
+  const ClearErrorMessageEvent();
+}
