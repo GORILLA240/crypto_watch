@@ -11,6 +11,7 @@ import 'core/storage/local_storage.dart';
 // Features - Price List
 import 'features/price_list/data/datasources/price_local_datasource.dart';
 import 'features/price_list/data/datasources/price_remote_datasource.dart';
+import 'features/price_list/data/datasources/price_mock_datasource.dart';
 import 'features/price_list/data/repositories/price_repository_impl.dart';
 import 'features/price_list/domain/repositories/price_repository.dart';
 import 'features/price_list/domain/usecases/get_prices.dart';
@@ -75,8 +76,13 @@ Future<void> init() async {
   );
 
   // Data sources
+  // モックモードの判定（環境変数 USE_MOCK_DATA=true または APIキーが空の場合）
+  const useMockData = bool.fromEnvironment('USE_MOCK_DATA', defaultValue: true);
+  
   sl.registerLazySingleton<PriceRemoteDataSource>(
-    () => PriceRemoteDataSourceImpl(apiClient: sl()),
+    () => useMockData 
+        ? PriceMockDataSource()
+        : PriceRemoteDataSourceImpl(apiClient: sl()),
   );
   sl.registerLazySingleton<PriceLocalDataSource>(
     () => PriceLocalDataSourceImpl(localStorage: sl()),

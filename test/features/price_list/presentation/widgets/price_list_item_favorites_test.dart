@@ -8,7 +8,6 @@ import 'package:crypto_watch/core/utils/display_density.dart';
 import 'package:crypto_watch/features/price_list/domain/entities/crypto_price.dart';
 import 'package:crypto_watch/features/price_list/presentation/widgets/price_list_item.dart';
 import 'package:crypto_watch/features/favorites/presentation/bloc/favorites_bloc.dart';
-import 'package:crypto_watch/features/favorites/presentation/bloc/favorites_event.dart';
 import 'package:crypto_watch/features/favorites/presentation/bloc/favorites_state.dart';
 import 'package:crypto_watch/features/favorites/domain/entities/favorite.dart';
 import 'package:crypto_watch/core/storage/local_storage.dart';

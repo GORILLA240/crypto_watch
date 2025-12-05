@@ -35,11 +35,6 @@ void main() {
               '最小タップ領域 $minTapSize を下回っています',
         );
 
-        // お気に入りアイコンのサイズを確認
-        final favoriteIconSize = density == DisplayDensity.maximum
-            ? config.iconSize * 0.5
-            : config.iconSize * 0.6;
-
         // お気に入りアイコンは小さいが、アイテム全体がタップ可能なため
         // アイテムの高さが最小タップ領域を満たしていれば問題ない
         // （アイコン自体をタップするのではなく、行全体をタップする設計）

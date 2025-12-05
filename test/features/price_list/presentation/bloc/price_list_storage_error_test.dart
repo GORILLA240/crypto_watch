@@ -256,7 +256,6 @@ void main() {
 
         // 初期状態を取得
         var currentState = bloc.state as PriceListLoaded;
-        final initialOrder = currentState.customOrder;
 
         // ランダムな並び替え操作を実行
         final reorderCount = random.nextInt(5) + 1;

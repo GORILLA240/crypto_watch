@@ -133,8 +133,6 @@ void main() {
             ),
           ),
         );
-
-        final config = DisplayDensityHelper.getConfig(density);
         
         // CryptoIconウィジェットを見つける
         final cryptoIconFinder = find.byType(Image);
