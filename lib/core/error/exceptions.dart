@@ -25,27 +25,19 @@ abstract class AppException implements Exception {
 /// ネットワーク関連の例外
 class NetworkException extends AppException {
   const NetworkException({
-    String message = 'ネットワーク接続がありません',
-    String? code,
-    dynamic originalError,
-  }) : super(
-          message: message,
-          code: code,
-          originalError: originalError,
-        );
+    super.message = 'ネットワーク接続がありません',
+    super.code,
+    super.originalError,
+  });
 }
 
 /// タイムアウト例外
 class TimeoutException extends AppException {
   const TimeoutException({
-    String message = 'リクエストがタイムアウトしました',
-    String? code,
-    dynamic originalError,
-  }) : super(
-          message: message,
-          code: code,
-          originalError: originalError,
-        );
+    super.message = 'リクエストがタイムアウトしました',
+    super.code,
+    super.originalError,
+  });
 }
 
 /// API関連の例外
@@ -53,20 +45,16 @@ class ApiException extends AppException {
   final int? statusCode;
 
   const ApiException({
-    required String message,
+    required super.message,
     this.statusCode,
-    String? code,
-    dynamic originalError,
-  }) : super(
-          message: message,
-          code: code,
-          originalError: originalError,
-        );
+    super.code,
+    super.originalError,
+  });
 
   @override
   String toString() {
     if (statusCode != null) {
-      return 'ApiException [${statusCode}]: $message';
+      return 'ApiException [$statusCode]: $message';
     }
     return 'ApiException: $message';
   }
@@ -75,83 +63,56 @@ class ApiException extends AppException {
 /// 認証エラー（401）
 class AuthenticationException extends ApiException {
   const AuthenticationException({
-    String message = 'APIキーが無効です',
-    String? code = 'AUTH_ERROR',
-    dynamic originalError,
-  }) : super(
-          message: message,
-          statusCode: 401,
-          code: code,
-          originalError: originalError,
-        );
+    super.message = 'APIキーが無効です',
+    super.code = 'AUTH_ERROR',
+    super.originalError,
+  }) : super(statusCode: 401);
 }
 
 /// レート制限エラー（429）
 class RateLimitException extends ApiException {
   const RateLimitException({
-    String message = 'リクエスト制限に達しました。しばらくお待ちください',
-    String? code = 'RATE_LIMIT',
-    dynamic originalError,
-  }) : super(
-          message: message,
-          statusCode: 429,
-          code: code,
-          originalError: originalError,
-        );
+    super.message = 'リクエスト制限に達しました。しばらくお待ちください',
+    super.code = 'RATE_LIMIT',
+    super.originalError,
+  }) : super(statusCode: 429);
 }
 
 /// サーバーエラー（500番台）
 class ServerException extends ApiException {
   const ServerException({
-    String message = 'サーバーエラーが発生しました',
-    int? statusCode = 500,
-    String? code = 'SERVER_ERROR',
-    dynamic originalError,
-  }) : super(
-          message: message,
-          statusCode: statusCode,
-          code: code,
-          originalError: originalError,
-        );
+    super.message = 'サーバーエラーが発生しました',
+    super.statusCode = 500,
+    super.code = 'SERVER_ERROR',
+    super.originalError,
+  });
 }
 
 /// データ関連の例外
 class DataException extends AppException {
   const DataException({
-    required String message,
-    String? code,
-    dynamic originalError,
-  }) : super(
-          message: message,
-          code: code,
-          originalError: originalError,
-        );
+    required super.message,
+    super.code,
+    super.originalError,
+  });
 }
 
 /// パース例外
 class ParseException extends DataException {
   const ParseException({
-    String message = 'データの解析に失敗しました',
-    String? code = 'PARSE_ERROR',
-    dynamic originalError,
-  }) : super(
-          message: message,
-          code: code,
-          originalError: originalError,
-        );
+    super.message = 'データの解析に失敗しました',
+    super.code = 'PARSE_ERROR',
+    super.originalError,
+  });
 }
 
 /// キャッシュ例外
 class CacheException extends DataException {
   const CacheException({
-    String message = 'キャッシュの読み書きに失敗しました',
-    String? code = 'CACHE_ERROR',
-    dynamic originalError,
-  }) : super(
-          message: message,
-          code: code,
-          originalError: originalError,
-        );
+    super.message = 'キャッシュの読み書きに失敗しました',
+    super.code = 'CACHE_ERROR',
+    super.originalError,
+  });
 }
 
 /// バリデーション例外
@@ -159,15 +120,11 @@ class ValidationException extends AppException {
   final Map<String, String>? errors;
 
   const ValidationException({
-    String message = '入力値が不正です',
+    super.message = '入力値が不正です',
     this.errors,
-    String? code = 'VALIDATION_ERROR',
-    dynamic originalError,
-  }) : super(
-          message: message,
-          code: code,
-          originalError: originalError,
-        );
+    super.code = 'VALIDATION_ERROR',
+    super.originalError,
+  });
 
   @override
   String toString() {
@@ -182,25 +139,17 @@ class ValidationException extends AppException {
 /// ストレージ例外
 class StorageException extends AppException {
   const StorageException({
-    String message = 'ストレージの操作に失敗しました',
-    String? code = 'STORAGE_ERROR',
-    dynamic originalError,
-  }) : super(
-          message: message,
-          code: code,
-          originalError: originalError,
-        );
+    super.message = 'ストレージの操作に失敗しました',
+    super.code = 'STORAGE_ERROR',
+    super.originalError,
+  });
 }
 
 /// 未実装機能例外
 class NotImplementedException extends AppException {
   const NotImplementedException({
-    String message = 'この機能はまだ実装されていません',
-    String? code = 'NOT_IMPLEMENTED',
-    dynamic originalError,
-  }) : super(
-          message: message,
-          code: code,
-          originalError: originalError,
-        );
+    super.message = 'この機能はまだ実装されていません',
+    super.code = 'NOT_IMPLEMENTED',
+    super.originalError,
+  });
 }

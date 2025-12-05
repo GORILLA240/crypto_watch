@@ -10,20 +10,17 @@ import 'package:crypto_watch/features/price_list/presentation/widgets/price_list
 import 'package:crypto_watch/features/favorites/presentation/bloc/favorites_bloc.dart';
 import 'package:crypto_watch/features/favorites/presentation/bloc/favorites_state.dart';
 import 'package:crypto_watch/features/favorites/domain/entities/favorite.dart';
-import 'package:crypto_watch/core/storage/local_storage.dart';
 
-@GenerateMocks([FavoritesBloc, LocalStorage])
+@GenerateMocks([FavoritesBloc])
 import 'price_list_item_favorites_test.mocks.dart';
 
 void main() {
   group('PriceListItem Favorites Property-Based Tests', () {
     late MockFavoritesBloc mockFavoritesBloc;
-    late MockLocalStorage mockLocalStorage;
     final random = Random(42); // 固定シードで再現性を確保
 
     setUp(() {
       mockFavoritesBloc = MockFavoritesBloc();
-      mockLocalStorage = MockLocalStorage();
       
       // デフォルトの状態を設定
       when(mockFavoritesBloc.state).thenReturn(const FavoritesLoaded(favorites: []));

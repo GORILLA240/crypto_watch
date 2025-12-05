@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:dartz/dartz.dart';
-import 'package:crypto_watch/core/error/failures.dart';
 import 'package:crypto_watch/core/storage/local_storage.dart';
 import 'package:crypto_watch/core/constants/app_constants.dart';
 import 'package:crypto_watch/features/price_list/domain/entities/crypto_price.dart';
@@ -15,7 +14,6 @@ import 'package:crypto_watch/features/price_list/presentation/bloc/price_list_st
 import 'package:crypto_watch/features/favorites/domain/usecases/get_favorites.dart';
 import 'package:crypto_watch/features/favorites/domain/usecases/add_favorite.dart';
 import 'package:crypto_watch/features/favorites/domain/usecases/remove_favorite.dart';
-import 'package:crypto_watch/features/favorites/domain/entities/favorite.dart';
 
 @GenerateMocks([
   GetPrices,

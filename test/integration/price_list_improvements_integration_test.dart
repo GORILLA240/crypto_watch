@@ -19,31 +19,37 @@ void main() {
 
   setUp(() async {
     // SharedPreferencesのモックチャンネルを設定
-    const MethodChannel('plugins.flutter.io/shared_preferences')
-        .setMockMethodCallHandler((MethodCall methodCall) async {
-      if (methodCall.method == 'getAll') {
-        return <String, dynamic>{};
-      }
-      if (methodCall.method == 'setString') {
-        return true;
-      }
-      if (methodCall.method == 'setStringList') {
-        return true;
-      }
-      if (methodCall.method == 'remove') {
-        return true;
-      }
-      return null;
-    });
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('plugins.flutter.io/shared_preferences'),
+      (MethodCall methodCall) async {
+        if (methodCall.method == 'getAll') {
+          return <String, dynamic>{};
+        }
+        if (methodCall.method == 'setString') {
+          return true;
+        }
+        if (methodCall.method == 'setStringList') {
+          return true;
+        }
+        if (methodCall.method == 'remove') {
+          return true;
+        }
+        return null;
+      },
+    );
 
     // Connectivityのモックチャンネルを設定
-    const MethodChannel('dev.fluttercommunity.plus/connectivity')
-        .setMockMethodCallHandler((MethodCall methodCall) async {
-      if (methodCall.method == 'check') {
-        return 'wifi';
-      }
-      return null;
-    });
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('dev.fluttercommunity.plus/connectivity'),
+      (MethodCall methodCall) async {
+        if (methodCall.method == 'check') {
+          return 'wifi';
+        }
+        return null;
+      },
+    );
 
     // 依存性注入をリセットして再初期化
     await di.sl.reset();
@@ -441,12 +447,14 @@ void main() {
     testWidgets('エラーハンドリング: ストレージ操作失敗時の動作',
         (WidgetTester tester) async {
       // ストレージエラーをシミュレート
-      const MethodChannel('plugins.flutter.io/shared_preferences')
-          .setMockMethodCallHandler((MethodCall methodCall) async {
-        if (methodCall.method == 'getAll') {
-          throw PlatformException(code: 'ERROR', message: 'Storage error');
-        }
-        return null;
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(
+        const MethodChannel('plugins.flutter.io/shared_preferences'),
+        (MethodCall methodCall) async {
+          if (methodCall.method == 'getAll') {
+            throw PlatformException(code: 'ERROR', message: 'Storage error');
+          }
+          return null;
       });
 
       // アプリを起動
@@ -593,8 +601,8 @@ void main() {
       await tester.pumpAndSettle();
 
       // 画面サイズを取得
-      final size = tester.binding.window.physicalSize /
-          tester.binding.window.devicePixelRatio;
+      final size = tester.view.physicalSize /
+          tester.view.devicePixelRatio;
       final screenHeight = size.height;
 
       // 各表示密度について検証

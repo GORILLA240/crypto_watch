@@ -257,7 +257,6 @@ void main() {
       // Arrange
       final delays = <Duration>[];
       DateTime? lastCallTime;
-      int callCount = 0;
 
       Future<String> operation() async {
         final now = DateTime.now();
@@ -265,7 +264,6 @@ void main() {
           delays.add(now.difference(lastCallTime!));
         }
         lastCallTime = now;
-        callCount++;
         throw Exception('Error');
       }
 

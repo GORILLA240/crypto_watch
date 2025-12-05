@@ -26,9 +26,9 @@ abstract class Failure extends Equatable {
 /// ネットワーク関連の失敗
 class NetworkFailure extends Failure {
   const NetworkFailure({
-    String message = 'ネットワーク接続がありません',
-    String? code,
-  }) : super(message: message, code: code);
+    super.message = 'ネットワーク接続がありません',
+    super.code,
+  });
 }
 
 /// サーバー関連の失敗
@@ -36,10 +36,10 @@ class ServerFailure extends Failure {
   final int? statusCode;
 
   const ServerFailure({
-    String message = 'サーバーエラーが発生しました',
+    super.message = 'サーバーエラーが発生しました',
     this.statusCode,
-    String? code,
-  }) : super(message: message, code: code);
+    super.code,
+  });
 
   @override
   List<Object?> get props => [message, code, statusCode];
@@ -56,9 +56,9 @@ class ServerFailure extends Failure {
 /// キャッシュ関連の失敗
 class CacheFailure extends Failure {
   const CacheFailure({
-    String message = 'キャッシュの読み書きに失敗しました',
-    String? code,
-  }) : super(message: message, code: code);
+    super.message = 'キャッシュの読み書きに失敗しました',
+    super.code,
+  });
 }
 
 /// バリデーション関連の失敗
@@ -66,10 +66,10 @@ class ValidationFailure extends Failure {
   final Map<String, String>? errors;
 
   const ValidationFailure({
-    String message = '入力値が不正です',
+    super.message = '入力値が不正です',
     this.errors,
-    String? code,
-  }) : super(message: message, code: code);
+    super.code,
+  });
 
   @override
   List<Object?> get props => [message, code, errors];
@@ -87,55 +87,55 @@ class ValidationFailure extends Failure {
 /// 認証関連の失敗
 class AuthenticationFailure extends Failure {
   const AuthenticationFailure({
-    String message = 'APIキーが無効です',
-    String? code = 'AUTH_ERROR',
-  }) : super(message: message, code: code);
+    super.message = 'APIキーが無効です',
+    super.code = 'AUTH_ERROR',
+  });
 }
 
 /// レート制限の失敗
 class RateLimitFailure extends Failure {
   const RateLimitFailure({
-    String message = 'リクエスト制限に達しました。しばらくお待ちください',
-    String? code = 'RATE_LIMIT',
-  }) : super(message: message, code: code);
+    super.message = 'リクエスト制限に達しました。しばらくお待ちください',
+    super.code = 'RATE_LIMIT',
+  });
 }
 
 /// パース関連の失敗
 class ParseFailure extends Failure {
   const ParseFailure({
-    String message = 'データの解析に失敗しました',
-    String? code = 'PARSE_ERROR',
-  }) : super(message: message, code: code);
+    super.message = 'データの解析に失敗しました',
+    super.code = 'PARSE_ERROR',
+  });
 }
 
 /// ストレージ関連の失敗
 class StorageFailure extends Failure {
   const StorageFailure({
-    String message = 'ストレージの操作に失敗しました',
-    String? code = 'STORAGE_ERROR',
-  }) : super(message: message, code: code);
+    super.message = 'ストレージの操作に失敗しました',
+    super.code = 'STORAGE_ERROR',
+  });
 }
 
 /// タイムアウトの失敗
 class TimeoutFailure extends Failure {
   const TimeoutFailure({
-    String message = 'リクエストがタイムアウトしました',
-    String? code = 'TIMEOUT',
-  }) : super(message: message, code: code);
+    super.message = 'リクエストがタイムアウトしました',
+    super.code = 'TIMEOUT',
+  });
 }
 
 /// 予期しないエラー
 class UnexpectedFailure extends Failure {
   const UnexpectedFailure({
-    String message = '予期しないエラーが発生しました',
-    String? code = 'UNEXPECTED_ERROR',
-  }) : super(message: message, code: code);
+    super.message = '予期しないエラーが発生しました',
+    super.code = 'UNEXPECTED_ERROR',
+  });
 }
 
 /// データが見つからない失敗
 class NotFoundFailure extends Failure {
   const NotFoundFailure({
-    String message = 'データが見つかりません',
-    String? code = 'NOT_FOUND',
-  }) : super(message: message, code: code);
+    super.message = 'データが見つかりません',
+    super.code = 'NOT_FOUND',
+  });
 }

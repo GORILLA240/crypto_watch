@@ -14,22 +14,28 @@ void main() {
 
   setUp(() async {
     // SharedPreferencesのモックチャンネルを設定
-    const MethodChannel('plugins.flutter.io/shared_preferences')
-        .setMockMethodCallHandler((MethodCall methodCall) async {
-      if (methodCall.method == 'getAll') {
-        return <String, dynamic>{};
-      }
-      return null;
-    });
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('plugins.flutter.io/shared_preferences'),
+      (MethodCall methodCall) async {
+        if (methodCall.method == 'getAll') {
+          return <String, dynamic>{};
+        }
+        return null;
+      },
+    );
 
     // Connectivityのモックチャンネルを設定
-    const MethodChannel('dev.fluttercommunity.plus/connectivity')
-        .setMockMethodCallHandler((MethodCall methodCall) async {
-      if (methodCall.method == 'check') {
-        return 'wifi';
-      }
-      return null;
-    });
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('dev.fluttercommunity.plus/connectivity'),
+      (MethodCall methodCall) async {
+        if (methodCall.method == 'check') {
+          return 'wifi';
+        }
+        return null;
+      },
+    );
 
     // 依存性注入をリセットして再初期化
     await di.sl.reset();

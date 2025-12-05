@@ -91,7 +91,7 @@ class CryptoPriceModel extends CryptoPrice {
       String cleanedValue = value;
       if (value.contains('+') && value.endsWith('Z')) {
         // +00:00Z -> Z に変換
-        cleanedValue = value.substring(0, value.lastIndexOf('+')) + 'Z';
+        cleanedValue = '${value.substring(0, value.lastIndexOf('+'))}Z';
       }
       return DateTime.parse(cleanedValue);
     }
