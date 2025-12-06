@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:crypto_watch/core/widgets/crypto_icon.dart';
 import 'package:crypto_watch/core/services/favorites_manager.dart';
 
 /// Property 8: 通貨アイコン取得の統一性

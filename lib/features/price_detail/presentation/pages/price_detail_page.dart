@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/routing/app_router.dart';
 import '../../../../core/utils/currency_formatter.dart';
-import '../../../../core/widgets/optimized_text_widget.dart';
 import '../../../price_list/domain/entities/crypto_price.dart';
 import '../../../price_list/presentation/bloc/price_list_bloc.dart';
 import '../../../price_list/presentation/bloc/price_list_state.dart';
@@ -31,29 +30,46 @@ class _PriceDetailPageState extends State<PriceDetailPage> {
     return Scaffold(
         backgroundColor: Colors.black,
         appBar: AppBar(
-          title: Text(
-            widget.symbol,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+          title: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              widget.symbol,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           backgroundColor: Colors.black,
           elevation: 0,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: Colors.white),
+            iconSize: 20,
+            padding: const EdgeInsets.all(8),
             onPressed: () => Navigator.of(context).pop(),
           ),
           actions: [
             IconButton(
               icon: const Icon(Icons.favorite_border, color: Colors.white),
+              iconSize: 20,
+              padding: const EdgeInsets.all(8),
+              constraints: const BoxConstraints(
+                minWidth: 40,
+                minHeight: 40,
+              ),
               onPressed: () {
                 AppRouter.navigateTo(context, AppRoutes.favorites);
               },
             ),
             IconButton(
               icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+              iconSize: 20,
+              padding: const EdgeInsets.all(8),
+              constraints: const BoxConstraints(
+                minWidth: 40,
+                minHeight: 40,
+              ),
               onPressed: () {
                 AppRouter.navigateTo(context, AppRoutes.alerts);
               },
@@ -133,31 +149,33 @@ class _PriceDetailPageState extends State<PriceDetailPage> {
                       Center(
                         child: Column(
                           children: [
-                            OptimizedTextWidget(
-                              CurrencyFormatter.format(
-                                convertedPrice,
-                                currency: effectiveCurrency,
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                CurrencyFormatter.format(
+                                  convertedPrice,
+                                  currency: effectiveCurrency,
+                                ),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 42,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 1,
                               ),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 48,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              autoScale: true,
-                              minFontSize: 24.0,
                             ),
                             const SizedBox(height: 8),
-                            OptimizedTextWidget(
-                              CurrencyFormatter.formatChangePercent(price.change24h),
-                              style: TextStyle(
-                                color: changeColor,
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                CurrencyFormatter.formatChangePercent(price.change24h),
+                                style: TextStyle(
+                                  color: changeColor,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 1,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
@@ -168,30 +186,36 @@ class _PriceDetailPageState extends State<PriceDetailPage> {
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: ['1H', '24H', '7D'].map((period) {
                           final isSelected = _selectedPeriod == period;
-                          return TextButton(
-                            onPressed: () {
-                              setState(() {
-                                _selectedPeriod = period;
-                              });
-                            },
-                            style: TextButton.styleFrom(
-                              backgroundColor:
-                                  isSelected ? Colors.blue : Colors.transparent,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 24,
-                                vertical: 12,
+                          return Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 4),
+                              child: TextButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _selectedPeriod = period;
+                                  });
+                                },
+                                style: TextButton.styleFrom(
+                                  backgroundColor:
+                                      isSelected ? Colors.blue : Colors.transparent,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 8,
+                                  ),
+                                ),
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    period,
+                                    style: TextStyle(
+                                      color: isSelected ? Colors.white : Colors.grey,
+                                      fontSize: 14,
+                                      fontWeight:
+                                          isSelected ? FontWeight.bold : FontWeight.normal,
+                                    ),
+                                  ),
+                                ),
                               ),
-                            ),
-                            child: OptimizedTextWidget(
-                              period,
-                              style: TextStyle(
-                                color: isSelected ? Colors.white : Colors.grey,
-                                fontSize: 16,
-                                fontWeight:
-                                    isSelected ? FontWeight.bold : FontWeight.normal,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
                           );
                         }).toList(),

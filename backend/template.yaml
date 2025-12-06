@@ -48,7 +48,7 @@ Globals:
         DYNAMODB_TABLE_NAME: !Ref CryptoWatchTable
         ENVIRONMENT: !Ref Environment
         POWERTOOLS_SERVICE_NAME: crypto-watch
-        LOG_LEVEL: !If [IsProduction, ERROR, INFO]
+        LOG_LEVEL: INFO
     Layers:
       - !Ref SharedLayer
 

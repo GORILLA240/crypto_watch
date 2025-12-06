@@ -3,8 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:crypto_watch/main.dart';
 import 'package:crypto_watch/injection_container.dart' as di;
-import 'package:crypto_watch/core/routing/app_router.dart';
-import 'package:crypto_watch/features/price_list/presentation/bloc/price_list_bloc.dart';
 
 /// 統合テスト
 /// 

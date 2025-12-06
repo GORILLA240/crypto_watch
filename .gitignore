@@ -5,11 +5,9 @@
 *.swp
 .DS_Store
 .atom/
-.build/
 .buildlog/
 .history
 .svn/
-.swiftpm/
 migrate_working_dir/
 
 # IntelliJ related
@@ -27,11 +25,12 @@ migrate_working_dir/
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
+.flutter-plugins
 .flutter-plugins-dependencies
+.packages
 .pub-cache/
 .pub/
 /build/
-/coverage/
 
 # Symbolication related
 app.*.symbols
@@ -43,3 +42,47 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Test coverage
+coverage/
+*.lcov
+
+# Generated files
+*.g.dart
+*.mocks.dart
+*.freezed.dart
+*.config.dart
+
+# Backend
+backend/.aws-sam/
+backend/.pytest_cache/
+backend/.hypothesis/
+backend/__pycache__/
+backend/**/__pycache__/
+backend/*.pyc
+backend/venv/
+backend/.venv/
+backend/.coverage
+backend/htmlcov/
+backend/.mypy_cache/
+backend/.tox/
+backend/dist/
+backend/build/
+backend/*.egg-info/
+backend/temp-api-key.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

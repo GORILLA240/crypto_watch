@@ -11,9 +11,8 @@ confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
 parameter_overrides = [
     "Environment=dev",
-    "RateLimitPerMinute=50",
-    "CacheTTLSeconds=120",
-    "LogLevel=DEBUG"
+    "RateLimitPerMinute=100",
+    "CacheTTLSeconds=300"
 ]
 tags = [
     "Environment=dev",

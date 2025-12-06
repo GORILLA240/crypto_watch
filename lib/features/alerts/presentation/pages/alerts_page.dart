@@ -65,18 +65,23 @@ class _AlertsPageContent extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text(
-          'アラート',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
+        title: const FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            'アラート',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
         backgroundColor: Colors.black,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
+          iconSize: 20,
+          padding: const EdgeInsets.all(8),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -106,37 +111,46 @@ class _AlertsPageContent extends StatelessWidget {
           // TODO: アラートリストを表示する実装を追加
           // 現在はプレースホルダーUI
           return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(
-                  Icons.notifications_outlined,
-                  size: 80,
-                  color: Colors.grey,
-                ),
-                const SizedBox(height: 24),
-                const Text(
-                  'アラートがありません',
-                  style: TextStyle(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.notifications_outlined,
+                    size: 64,
                     color: Colors.grey,
-                    fontSize: 18,
                   ),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton.icon(
-                  onPressed: () => _showCreateAlertDialog(context),
-                  icon: const Icon(Icons.add),
-                  label: const Text('アラートを作成'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 12,
+                  const SizedBox(height: 16),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: const Text(
+                      'アラートがありません',
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 16,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 16),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _showCreateAlertDialog(context),
+                      icon: const Icon(Icons.add, size: 18),
+                      label: const Text('アラートを作成'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 10,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         },

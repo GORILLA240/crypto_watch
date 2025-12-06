@@ -2,7 +2,6 @@ import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:crypto_watch/core/services/currency_search_service.dart';
 import 'package:crypto_watch/core/services/coingecko_api_client.dart';
-import 'package:crypto_watch/core/services/search_cache.dart';
 import 'package:crypto_watch/core/models/currency_search_result.dart';
 
 /// モックCoinGecko APIクライアント（プロパティテスト用）

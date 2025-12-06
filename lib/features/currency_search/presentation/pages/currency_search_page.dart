@@ -106,7 +106,7 @@ class _CurrencySearchPageState extends State<CurrencySearchPage> {
           _errorType = 'empty';
         }
       });
-    } on NetworkException catch (e) {
+    } on NetworkException {
       // ネットワークエラー（要件 16.10）
       setState(() {
         _searchResults = [];
@@ -114,7 +114,7 @@ class _CurrencySearchPageState extends State<CurrencySearchPage> {
         _errorMessage = 'ネットワーク接続を確認してください';
         _errorType = 'network';
       });
-    } on RateLimitException catch (e) {
+    } on RateLimitException {
       // レート制限エラー（要件 16.10）
       setState(() {
         _searchResults = [];
@@ -122,7 +122,7 @@ class _CurrencySearchPageState extends State<CurrencySearchPage> {
         _errorMessage = 'リクエスト制限に達しました。しばらくお待ちください';
         _errorType = 'rate_limit';
       });
-    } on ServerException catch (e) {
+    } on ServerException {
       // サーバーエラー（要件 16.10）
       setState(() {
         _searchResults = [];
@@ -188,17 +188,21 @@ class _CurrencySearchPageState extends State<CurrencySearchPage> {
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
-        title: const OptimizedTextWidget(
-          text: '通貨を検索',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
+        title: const FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            '通貨を検索',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-          maxLines: 1,
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
+          iconSize: 20,
+          padding: const EdgeInsets.all(8),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -354,7 +358,7 @@ class _CurrencySearchPageState extends State<CurrencySearchPage> {
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: OptimizedTextWidget(
-                    text: '#${currency.marketCapRank}',
+                    '#${currency.marketCapRank}',
                     style: TextStyle(
                       color: Colors.grey[400],
                       fontSize: 12,
@@ -451,7 +455,7 @@ class _CurrencySearchPageState extends State<CurrencySearchPage> {
             ),
             const SizedBox(height: 16),
             OptimizedTextWidget(
-              text: _errorMessage!,
+              _errorMessage!,
               style: TextStyle(
                 color: Colors.grey[400],
                 fontSize: 16,
@@ -463,7 +467,7 @@ class _CurrencySearchPageState extends State<CurrencySearchPage> {
             // 検索のヒント（要件 16.9）
             if (_errorType == 'empty')
               OptimizedTextWidget(
-                text: 'ティッカーシンボルまたは通貨名で検索してください',
+                'ティッカーシンボルまたは通貨名で検索してください',
                 style: TextStyle(
                   color: Colors.grey[600],
                   fontSize: 14,
@@ -498,7 +502,7 @@ class _CurrencySearchPageState extends State<CurrencySearchPage> {
             if (_errorType == 'empty') ...[
               const SizedBox(height: 24),
               OptimizedTextWidget(
-                text: '人気の通貨',
+                '人気の通貨',
                 style: TextStyle(
                   color: Colors.grey[400],
                   fontSize: 14,
@@ -563,7 +567,7 @@ class _CurrencySearchPageState extends State<CurrencySearchPage> {
             ),
             const SizedBox(height: 16),
             OptimizedTextWidget(
-              text: '通貨を検索',
+              '通貨を検索',
               style: TextStyle(
                 color: Colors.grey[400],
                 fontSize: 18,
@@ -573,7 +577,7 @@ class _CurrencySearchPageState extends State<CurrencySearchPage> {
             ),
             const SizedBox(height: 8),
             OptimizedTextWidget(
-              text: 'ティッカーシンボルまたは通貨名を\n2文字以上入力してください',
+              'ティッカーシンボルまたは通貨名を\n2文字以上入力してください',
               style: TextStyle(
                 color: Colors.grey[600],
                 fontSize: 14,

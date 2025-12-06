@@ -6,7 +6,6 @@ import 'package:crypto_watch/injection_container.dart' as di;
 import 'package:crypto_watch/core/utils/display_density.dart';
 import 'package:crypto_watch/features/price_list/presentation/widgets/price_list_item.dart';
 import 'package:crypto_watch/core/widgets/crypto_icon.dart';
-import 'package:crypto_watch/features/price_list/presentation/bloc/price_list_bloc.dart';
 
 /// 価格一覧改善機能の統合テスト
 /// 

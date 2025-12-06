@@ -132,25 +132,28 @@ class ApiClient {
 
       case 400:
         // バリデーションエラー
+        // バックエンドのエラーコード: VALIDATION_ERROR
         final errorData = _parseResponse(response);
         throw ValidationException(
-          message: errorData['message'] ?? '入力値が不正です',
+          message: errorData['error'] ?? '入力値が不正です',
           code: errorData['code'],
         );
 
       case 401:
         // 認証エラー
+        // バックエンドのエラーコード: UNAUTHORIZED
         final errorData = _parseResponse(response);
         throw AuthenticationException(
-          message: errorData['message'] ?? 'APIキーが無効です',
+          message: errorData['error'] ?? 'APIキーが無効です',
           code: errorData['code'],
         );
 
       case 429:
         // レート制限エラー
+        // バックエンドのエラーコード: RATE_LIMIT_EXCEEDED
         final errorData = _parseResponse(response);
         throw RateLimitException(
-          message: errorData['message'] ?? 'リクエスト制限に達しました',
+          message: errorData['error'] ?? 'リクエスト制限に達しました',
           code: errorData['code'],
         );
 
@@ -159,9 +162,10 @@ class ApiClient {
       case 503:
       case 504:
         // サーバーエラー
+        // バックエンドのエラーコード: INTERNAL_ERROR, EXTERNAL_API_ERROR
         final errorData = _parseResponse(response);
         throw ServerException(
-          message: errorData['message'] ?? 'サーバーエラーが発生しました',
+          message: errorData['error'] ?? 'サーバーエラーが発生しました',
           statusCode: response.statusCode,
           code: errorData['code'],
         );

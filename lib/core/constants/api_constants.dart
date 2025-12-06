@@ -3,10 +3,11 @@ class ApiConstants {
   // プライベートコンストラクタ - インスタンス化を防ぐ
   ApiConstants._();
 
-  // API基底URL（環境変数から取得、デフォルトは開発環境）
+  // API基底URL（環境変数から取得）
+  // デプロイ後は --dart-define=API_BASE_URL=<your-url> で指定
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://your-api-gateway-url.execute-api.region.amazonaws.com/dev',
+    defaultValue: '',
   );
 
   // APIキー（環境変数から取得）
@@ -31,6 +32,7 @@ class ApiConstants {
   static const Duration receiveTimeout = Duration(seconds: 10);
 
   // サポートされる暗号通貨シンボル
+  // バックエンドのtemplate.yamlのSupportedSymbolsパラメータと同期すること
   static const List<String> supportedSymbols = [
     'BTC',
     'ETH',
@@ -62,4 +64,8 @@ class ApiConstants {
     'BNB',
     'SOL',
   ];
+
+  // サポート通貨リストの同期に関する注意:
+  // このリストはバックエンドのtemplate.yamlのSupportedSymbolsパラメータと
+  // 手動で同期する必要があります。将来的にはAPIから動的に取得することを推奨します。
 }

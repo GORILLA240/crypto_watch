@@ -61,29 +61,32 @@ class ApiException extends AppException {
 }
 
 /// 認証エラー（401）
+/// バックエンドのエラーコード: UNAUTHORIZED
 class AuthenticationException extends ApiException {
   const AuthenticationException({
     super.message = 'APIキーが無効です',
-    super.code = 'AUTH_ERROR',
+    super.code = 'UNAUTHORIZED',
     super.originalError,
   }) : super(statusCode: 401);
 }
 
 /// レート制限エラー（429）
+/// バックエンドのエラーコード: RATE_LIMIT_EXCEEDED
 class RateLimitException extends ApiException {
   const RateLimitException({
     super.message = 'リクエスト制限に達しました。しばらくお待ちください',
-    super.code = 'RATE_LIMIT',
+    super.code = 'RATE_LIMIT_EXCEEDED',
     super.originalError,
   }) : super(statusCode: 429);
 }
 
 /// サーバーエラー（500番台）
+/// バックエンドのエラーコード: INTERNAL_ERROR
 class ServerException extends ApiException {
   const ServerException({
     super.message = 'サーバーエラーが発生しました',
     super.statusCode = 500,
-    super.code = 'SERVER_ERROR',
+    super.code = 'INTERNAL_ERROR',
     super.originalError,
   });
 }

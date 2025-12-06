@@ -88,12 +88,15 @@ class _PriceListPageContent extends StatelessWidget {
           return Scaffold(
             backgroundColor: Colors.black,
             appBar: AppBar(
-            title: Text(
-              isReorderMode ? '並び替えモード' : 'Crypto Watch',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+            title: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                isReorderMode ? '並び替えモード' : 'Crypto Watch',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             backgroundColor: Colors.black,
@@ -102,11 +105,11 @@ class _PriceListPageContent extends StatelessWidget {
               if (!isReorderMode) ...[
                 IconButton(
                   icon: const Icon(Icons.star, color: Colors.white),
-                  iconSize: 24,
-                  padding: const EdgeInsets.all(12),
+                  iconSize: 18,
+                  padding: const EdgeInsets.all(4),
                   constraints: const BoxConstraints(
-                    minWidth: 44,
-                    minHeight: 44,
+                    minWidth: 36,
+                    minHeight: 36,
                   ),
                   onPressed: () {
                     AppRouter.navigateTo(context, AppRoutes.favorites);
@@ -114,11 +117,11 @@ class _PriceListPageContent extends StatelessWidget {
                 ),
                 IconButton(
                   icon: const Icon(Icons.notifications, color: Colors.white),
-                  iconSize: 24,
-                  padding: const EdgeInsets.all(12),
+                  iconSize: 18,
+                  padding: const EdgeInsets.all(4),
                   constraints: const BoxConstraints(
-                    minWidth: 44,
-                    minHeight: 44,
+                    minWidth: 36,
+                    minHeight: 36,
                   ),
                   onPressed: () {
                     AppRouter.navigateTo(context, AppRoutes.alerts);
@@ -130,11 +133,11 @@ class _PriceListPageContent extends StatelessWidget {
                   isReorderMode ? Icons.check : Icons.reorder,
                   color: Colors.white,
                 ),
-                iconSize: 24,
-                padding: const EdgeInsets.all(12),
+                iconSize: 18,
+                padding: const EdgeInsets.all(4),
                 constraints: const BoxConstraints(
-                  minWidth: 44,
-                  minHeight: 44,
+                  minWidth: 36,
+                  minHeight: 36,
                 ),
                 onPressed: () {
                   context.read<PriceListBloc>().add(const ToggleReorderModeEvent());
@@ -143,11 +146,11 @@ class _PriceListPageContent extends StatelessWidget {
               // 設定アイコンは常に表示（要件 3.1, 3.5）
               IconButton(
                 icon: const Icon(Icons.settings, color: Colors.white),
-                iconSize: 24,
-                padding: const EdgeInsets.all(12),
+                iconSize: 18,
+                padding: const EdgeInsets.all(4),
                 constraints: const BoxConstraints(
-                  minWidth: 44,
-                  minHeight: 44,
+                  minWidth: 36,
+                  minHeight: 36,
                 ),
                 onPressed: () {
                   AppRouter.navigateTo(context, AppRoutes.settings);

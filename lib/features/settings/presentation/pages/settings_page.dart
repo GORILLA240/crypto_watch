@@ -54,18 +54,23 @@ class _SettingsPageContentState extends State<_SettingsPageContent> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text(
-          '設定',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
+        title: const FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            '設定',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
         backgroundColor: Colors.black,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
+          iconSize: 20,
+          padding: const EdgeInsets.all(8),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),

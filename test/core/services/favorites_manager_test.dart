@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:crypto_watch/core/services/favorites_manager.dart';
-import 'package:crypto_watch/core/models/favorites_currency.dart';
 
 void main() {
   late FavoritesManager favoritesManager;

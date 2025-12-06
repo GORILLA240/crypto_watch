@@ -92,18 +92,23 @@ class _FavoritesPageContent extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text(
-          'お気に入り',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
+        title: const FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            'お気に入り',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
         backgroundColor: Colors.black,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
+          iconSize: 20,
+          padding: const EdgeInsets.all(8),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),

@@ -12,8 +12,7 @@ capabilities = "CAPABILITY_IAM"
 parameter_overrides = [
     "Environment=prod",
     "RateLimitPerMinute=100",
-    "CacheTTLSeconds=300",
-    "LogLevel=ERROR"
+    "CacheTTLSeconds=300"
 ]
 tags = [
     "Environment=prod",

@@ -179,9 +179,10 @@ class PriceRemoteDataSourceImpl implements PriceRemoteDataSource {
   }
 
   /// レスポンスから価格データのリストをパース
+  /// バックエンドのレスポンス形式: {"data": [...], "timestamp": "..."}
   List<CryptoPriceModel> _parsePricesResponse(Map<String, dynamic> response) {
     try {
-      // レスポンスが直接配列の場合
+      // バックエンドの標準形式: {"data": [...], "timestamp": "..."}
       if (response.containsKey('data') && response['data'] is List) {
         final List<dynamic> dataList = response['data'] as List;
         return dataList
@@ -189,21 +190,13 @@ class PriceRemoteDataSourceImpl implements PriceRemoteDataSource {
             .toList();
       }
 
-      // レスポンスが prices キーを持つ場合
-      if (response.containsKey('prices') && response['prices'] is List) {
-        final List<dynamic> pricesList = response['prices'] as List;
-        return pricesList
-            .map((item) => CryptoPriceModel.fromJson(item as Map<String, dynamic>))
-            .toList();
-      }
-
-      // レスポンスが単一のオブジェクトの場合
+      // レスポンスが単一のオブジェクトの場合（後方互換性のため残す）
       if (response.containsKey('symbol')) {
         return [CryptoPriceModel.fromJson(response)];
       }
 
       throw ParseException(
-        message: 'レスポンスの形式が不正です',
+        message: 'レスポンスの形式が不正です。期待される形式: {"data": [...], "timestamp": "..."}',
       );
     } catch (e) {
       if (e is AppException) rethrow;

@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/display_density.dart';
 import '../../../../core/widgets/crypto_icon.dart';
-import '../../../../core/widgets/optimized_text_widget.dart';
 import '../../domain/entities/crypto_price.dart';
 
 /// 価格リストアイテムウィジェット
@@ -154,101 +153,121 @@ class PriceListItem extends StatelessWidget {
               SizedBox(width: config.padding * 0.5),
             ],
             
-            // 通貨アイコン（左端）（要件 15.1, 15.2, 15.6）
+            // 通貨アイコン（左端）- 小さく表示
             CryptoIcon(
               symbol: price.symbol,
-              size: config.iconSize,
+              size: config.iconSize * 0.7, // アイコンを30%縮小
             ),
-            // アイコンとテキストの間隔を8ピクセル確保（要件 15.7）
-            const SizedBox(width: 8.0),
+            // アイコンとテキストの間隔
+            SizedBox(width: config.padding * 0.5),
             
             // シンボルと名前
             Expanded(
-              flex: 2,
+              flex: 3,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  OptimizedTextWidget(
-                    price.symbol,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: config.fontSize,
-                      fontWeight: FontWeight.bold,
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      price.symbol,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: config.fontSize * 1.1,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                   if (displayDensity == DisplayDensity.standard) ...[
-                    const SizedBox(height: 4),
-                    OptimizedTextWidget(
-                      price.name,
-                      style: TextStyle(
-                        color: Colors.grey[400],
-                        fontSize: config.fontSize * 0.75,
+                    const SizedBox(height: 2),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        price.name,
+                        style: TextStyle(
+                          color: Colors.grey[400],
+                          fontSize: config.fontSize * 0.75,
+                        ),
+                        maxLines: 1,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ] else if (displayDensity == DisplayDensity.compact) ...[
-                    const SizedBox(height: 2),
-                    OptimizedTextWidget(
-                      price.name,
-                      style: TextStyle(
-                        color: Colors.grey[400],
-                        fontSize: config.fontSize * 0.7,
+                    const SizedBox(height: 1),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        price.name,
+                        style: TextStyle(
+                          color: Colors.grey[400],
+                          fontSize: config.fontSize * 0.7,
+                        ),
+                        maxLines: 1,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ],
               ),
             ),
             
-            // 価格
-            Expanded(
-              flex: 2,
-              child: OptimizedTextWidget(
-                CurrencyFormatter.format(
-                  convertedPrice,
-                  currency: effectiveCurrency,
-                ),
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: config.fontSize,
-                  fontWeight: FontWeight.w600,
-                ),
-                textAlign: TextAlign.right,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            SizedBox(width: config.padding * 0.75),
+            SizedBox(width: config.padding * 0.5),
             
-            // 変動率
+            // 価格と変動率を縦に並べる
             Expanded(
-              flex: 1,
-              child: Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: config.padding * 0.5,
-                  vertical: config.padding * 0.25,
-                ),
-                decoration: BoxDecoration(
-                  color: changeColor.withOpacity(0.2),
-                  borderRadius: const BorderRadius.all(Radius.circular(4)),
-                ),
-                child: OptimizedTextWidget(
-                  CurrencyFormatter.formatChangePercent(price.change24h),
-                  style: TextStyle(
-                    color: changeColor,
-                    fontSize: config.fontSize * 0.85,
-                    fontWeight: FontWeight.bold,
+              flex: 4,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // 価格
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      CurrencyFormatter.format(
+                        convertedPrice,
+                        currency: effectiveCurrency,
+                      ),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: config.fontSize * 1.1,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      textAlign: TextAlign.right,
+                      maxLines: 1,
+                    ),
                   ),
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                  const SizedBox(height: 2),
+                  // 変動率
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerRight,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: config.padding * 0.4,
+                        vertical: config.padding * 0.15,
+                      ),
+                      decoration: BoxDecoration(
+                        color: changeColor.withOpacity(0.2),
+                        borderRadius: const BorderRadius.all(Radius.circular(4)),
+                      ),
+                      child: Text(
+                        CurrencyFormatter.formatChangePercent(price.change24h),
+                        style: TextStyle(
+                          color: changeColor,
+                          fontSize: config.fontSize * 0.85,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             

@@ -58,15 +58,18 @@ class _AlertFormState extends State<AlertForm> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            '${widget.symbol} のアラート設定',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              '${widget.symbol} のアラート設定',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           TextFormField(
             controller: _upperLimitController,
             decoration: const InputDecoration(
@@ -126,17 +129,20 @@ class _AlertFormState extends State<AlertForm> {
               return null;
             },
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           ElevatedButton(
             onPressed: _submit,
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blue,
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16),
+              padding: const EdgeInsets.symmetric(vertical: 12),
             ),
-            child: const Text(
-              'アラートを設定',
-              style: TextStyle(fontSize: 18),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: const Text(
+                'アラートを設定',
+                style: TextStyle(fontSize: 16),
+              ),
             ),
           ),
         ],

@@ -51,8 +51,8 @@ final sl = GetIt.instance;
 /// 依存性注入の初期化
 Future<void> init() async {
   //! Features - Price List
-  // Bloc
-  sl.registerLazySingleton(
+  // Bloc - Factoryパターンで毎回新しいインスタンスを作成
+  sl.registerFactory(
     () => PriceListBloc(
       getPrices: sl(),
       refreshPrices: sl(),
@@ -145,7 +145,7 @@ Future<void> init() async {
   );
 
   //! Features - Settings
-  // Bloc
+  // Bloc - Singletonパターン（設定は全体で1つのインスタンスを共有）
   sl.registerLazySingleton(
     () => SettingsBloc(
       getSettings: sl(),
