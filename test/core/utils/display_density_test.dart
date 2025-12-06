@@ -79,10 +79,10 @@ void main() {
       final config = DisplayDensityHelper.getConfig(DisplayDensity.maximum);
       
       expect(config.density, DisplayDensity.maximum);
-      expect(config.itemHeight, 48.0);
+      expect(config.itemHeight, 52.0); // 最小タップ領域を確保するため52px
       expect(config.iconSize, 32.0);
       expect(config.fontSize, 14.0);
-      expect(config.padding, 8.0);
+      expect(config.padding, 12.0); // 最小パディング要件（12px以上）
     });
 
     test('getMinItems should return correct minimum items', () {
@@ -118,12 +118,12 @@ void main() {
 
       // Maximum density with 600px screen height
       // Available height = 544
-      // Items = 544 / 48 = 11.33 -> floor = 11
+      // Items = 544 / 52 = 10.46 -> floor = 10
       final maximumItems = DisplayDensityHelper.calculateVisibleItems(
         600.0,
         DisplayDensity.maximum,
       );
-      expect(maximumItems, 11);
+      expect(maximumItems, 10);
     });
   });
 
@@ -207,9 +207,9 @@ void main() {
       
       for (int i = 0; i < 100; i++) {
         // For maximum (48px items):
-        // Min: 9 items = 9 * 48 + 56 = 488px
-        // Max: 12 items = 12 * 48 + 56 = 632px
-        final screenHeight = 488.0 + random.nextDouble() * 144.0; // 488-632px
+        // Min: 9 items = 9 * 52 + 56 = 524px
+        // Max: 12 items = 12 * 52 + 56 = 680px
+        final screenHeight = 524.0 + random.nextDouble() * 156.0; // 524-680px
         
         final visibleItems = DisplayDensityHelper.calculateVisibleItems(
           screenHeight,

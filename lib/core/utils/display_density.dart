@@ -71,12 +71,13 @@ class DisplayDensityConfig {
 /// 表示密度ヘルパークラス
 class DisplayDensityHelper {
   // パフォーマンス最適化: 設定をキャッシュ（要件 6.1）
+  // 最小パディング要件を満たす（要件 8.1, 8.2, 8.5）
   static const _standardConfig = DisplayDensityConfig(
     density: DisplayDensity.standard,
     itemHeight: 80.0,
     iconSize: 40.0,
     fontSize: 18.0,
-    padding: 16.0,
+    padding: 16.0, // 横方向パディング（12px以上）
   );
 
   static const _compactConfig = DisplayDensityConfig(
@@ -84,15 +85,15 @@ class DisplayDensityHelper {
     itemHeight: 60.0,
     iconSize: 32.0,
     fontSize: 16.0,
-    padding: 12.0,
+    padding: 12.0, // 横方向パディング（12px以上）
   );
 
   static const _maximumConfig = DisplayDensityConfig(
     density: DisplayDensity.maximum,
-    itemHeight: 48.0,
+    itemHeight: 52.0, // 最小タップ領域を確保するため52pxに増加
     iconSize: 32.0,
     fontSize: 14.0,
-    padding: 8.0,
+    padding: 12.0, // 横方向パディング（12px以上、8pxから増加）
   );
 
   /// 表示密度に応じた設定を取得

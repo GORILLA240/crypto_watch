@@ -70,6 +70,7 @@ class PriceListBloc extends Bloc<PriceListEvent, PriceListState> {
   }
 
   /// 価格データをリフレッシュ
+  /// カスタム通貨とデフォルト通貨の両方をサポート（要件 16.7, 17.10）
   Future<void> _onRefreshPrices(
     RefreshPricesEvent event,
     Emitter<PriceListState> emit,
@@ -94,7 +95,17 @@ class PriceListBloc extends Bloc<PriceListEvent, PriceListState> {
       emit(const PriceListLoading());
     }
 
-    final result = await refreshPrices();
+    // お気に入りリストを取得してシンボルを抽出
+    final favoritesResult = await getFavorites();
+    final favoriteSymbols = favoritesResult.fold(
+      (_) => currentFavorites,
+      (favorites) => favorites.map((f) => f.symbol).toList(),
+    );
+
+    // お気に入りのシンボル（デフォルト + カスタム）で価格を取得
+    final result = favoriteSymbols.isNotEmpty
+        ? await getPrices(favoriteSymbols)
+        : await refreshPrices();
 
     await result.fold(
       (failure) async {
@@ -106,19 +117,13 @@ class PriceListBloc extends Bloc<PriceListEvent, PriceListState> {
             favoriteSymbols: currentState.favoriteSymbols,
             isReorderMode: currentState.isReorderMode,
             customOrder: currentState.customOrder,
+            errorMessage: failure.message,
           ));
         } else {
           emit(PriceListError(message: failure.message));
         }
       },
       (prices) async {
-        // お気に入りリストも更新
-        final favoritesResult = await getFavorites();
-        final favoriteSymbols = favoritesResult.fold(
-          (_) => currentFavorites,
-          (favorites) => favorites.map((f) => f.symbol).toList(),
-        );
-
         emit(PriceListLoaded(
           prices: prices,
           favoriteSymbols: favoriteSymbols,

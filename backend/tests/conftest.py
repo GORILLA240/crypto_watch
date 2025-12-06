@@ -6,6 +6,8 @@ import pytest
 import os
 import sys
 from pathlib import Path
+import boto3
+from moto import mock_aws
 
 # Add src directory to Python path for imports
 src_path = Path(__file__).parent.parent / 'src'
@@ -31,3 +33,30 @@ def environment_variables():
     os.environ['RATE_LIMIT_PER_MINUTE'] = '100'
     os.environ['CACHE_TTL_SECONDS'] = '300'
     os.environ['LOG_LEVEL'] = 'DEBUG'
+
+
+@pytest.fixture
+def mock_dynamodb(aws_credentials, environment_variables):
+    """Mock DynamoDB for testing."""
+    with mock_aws():
+        # Create mock DynamoDB table
+        dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+        table_name = os.environ['DYNAMODB_TABLE_NAME']
+        
+        table = dynamodb.create_table(
+            TableName=table_name,
+            KeySchema=[
+                {'AttributeName': 'PK', 'KeyType': 'HASH'},
+                {'AttributeName': 'SK', 'KeyType': 'RANGE'}
+            ],
+            AttributeDefinitions=[
+                {'AttributeName': 'PK', 'AttributeType': 'S'},
+                {'AttributeName': 'SK', 'AttributeType': 'S'}
+            ],
+            BillingMode='PAY_PER_REQUEST'
+        )
+        
+        # Wait for table to be created
+        table.meta.client.get_waiter('table_exists').wait(TableName=table_name)
+        
+        yield dynamodb

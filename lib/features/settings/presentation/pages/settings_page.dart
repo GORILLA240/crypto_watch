@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/utils/display_density.dart';
+import '../../../../core/services/font_size_manager.dart';
 import '../bloc/settings_bloc.dart';
 import '../bloc/settings_event.dart';
 import '../bloc/settings_state.dart';
@@ -17,8 +18,36 @@ class SettingsPage extends StatelessWidget {
   }
 }
 
-class _SettingsPageContent extends StatelessWidget {
+class _SettingsPageContent extends StatefulWidget {
   const _SettingsPageContent();
+
+  @override
+  State<_SettingsPageContent> createState() => _SettingsPageContentState();
+}
+
+class _SettingsPageContentState extends State<_SettingsPageContent> {
+  final FontSizeManager _fontSizeManager = FontSizeManager();
+  FontSizeOption _currentFontSize = FontSizeOption.normal;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFontSize();
+  }
+
+  Future<void> _loadFontSize() async {
+    final fontSize = await _fontSizeManager.getFontSizeOption();
+    setState(() {
+      _currentFontSize = fontSize;
+    });
+  }
+
+  Future<void> _updateFontSize(FontSizeOption option) async {
+    await _fontSizeManager.setFontSizeOption(option);
+    setState(() {
+      _currentFontSize = option;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -109,6 +138,26 @@ class _SettingsPageContent extends StatelessWidget {
                     activeTrackColor: Colors.blue,
                   ),
                   const SizedBox(height: 32),
+                  // Font size selector
+                  const Text(
+                    'フォントサイズ',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'テキストの大きさを調整します',
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildFontSizeSelector(),
+                  const SizedBox(height: 32),
                   // Display density selector
                   const Text(
                     '表示密度',
@@ -166,6 +215,88 @@ class _SettingsPageContent extends StatelessWidget {
 
           return const SizedBox.shrink();
         },
+      ),
+    );
+  }
+
+  Widget _buildFontSizeSelector() {
+    return Column(
+      children: [
+        _buildFontSizeOption(
+          FontSizeOption.small,
+          '小',
+          '90%',
+        ),
+        const SizedBox(height: 8),
+        _buildFontSizeOption(
+          FontSizeOption.normal,
+          '標準',
+          '100%',
+        ),
+        const SizedBox(height: 8),
+        _buildFontSizeOption(
+          FontSizeOption.large,
+          '大',
+          '110%',
+        ),
+        const SizedBox(height: 8),
+        _buildFontSizeOption(
+          FontSizeOption.extraLarge,
+          '特大',
+          '120%',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFontSizeOption(
+    FontSizeOption option,
+    String label,
+    String description,
+  ) {
+    final isSelected = _currentFontSize == option;
+    
+    // Calculate preview font size
+    final previewBaseSize = 16.0;
+    final previewSize = _fontSizeManager.getScaledFontSize(
+      previewBaseSize,
+      option,
+    );
+    
+    return Container(
+      decoration: BoxDecoration(
+        color: isSelected ? Colors.blue.withValues(alpha: 0.2) : Colors.grey[900],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isSelected ? Colors.blue : Colors.grey[800]!,
+          width: 2,
+        ),
+      ),
+      child: RadioListTile<FontSizeOption>(
+        value: option,
+        groupValue: _currentFontSize,
+        onChanged: (value) {
+          if (value != null) {
+            _updateFontSize(value);
+          }
+        },
+        activeColor: Colors.blue,
+        title: Text(
+          label,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: previewSize,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        subtitle: Text(
+          description,
+          style: const TextStyle(
+            color: Colors.grey,
+            fontSize: 14,
+          ),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       ),
     );
   }

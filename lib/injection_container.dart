@@ -6,6 +6,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 // Core
 import 'core/network/api_client.dart';
 import 'core/network/network_info.dart';
+import 'core/services/coingecko_api_client.dart';
 import 'core/storage/local_storage.dart';
 
 // Features - Price List
@@ -82,7 +83,10 @@ Future<void> init() async {
   sl.registerLazySingleton<PriceRemoteDataSource>(
     () => useMockData 
         ? PriceMockDataSource()
-        : PriceRemoteDataSourceImpl(apiClient: sl()),
+        : PriceRemoteDataSourceImpl(
+            apiClient: sl(),
+            coinGeckoClient: sl(),
+          ),
   );
   sl.registerLazySingleton<PriceLocalDataSource>(
     () => PriceLocalDataSourceImpl(localStorage: sl()),
@@ -169,6 +173,7 @@ Future<void> init() async {
     () => NetworkInfoImpl(connectivity: sl()),
   );
   sl.registerLazySingleton(() => ApiClient(client: sl()));
+  sl.registerLazySingleton(() => CoinGeckoApiClient(client: sl()));
 
   // Storage
   sl.registerLazySingleton<LocalStorage>(

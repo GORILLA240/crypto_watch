@@ -6,6 +6,7 @@ import 'package:crypto_watch/injection_container.dart' as di;
 import 'package:crypto_watch/core/utils/display_density.dart';
 import 'package:crypto_watch/features/price_list/presentation/widgets/price_list_item.dart';
 import 'package:crypto_watch/core/widgets/crypto_icon.dart';
+import 'package:crypto_watch/features/price_list/presentation/bloc/price_list_bloc.dart';
 
 /// 価格一覧改善機能の統合テスト
 /// 
@@ -54,6 +55,11 @@ void main() {
     // 依存性注入をリセットして再初期化
     await di.sl.reset();
     await di.init();
+  });
+
+  tearDown(() async {
+    // 依存性注入をリセット
+    await di.sl.reset();
   });
 
   group('価格一覧改善機能 - 統合テスト', () {
@@ -212,11 +218,14 @@ void main() {
           // 表示密度を変更（スクロールして見つける）
           final densityOption = find.text(density);
           if (densityOption.evaluate().isNotEmpty) {
+            // 最初の要素を取得（複数ある場合）
+            final firstOption = densityOption.first;
+            
             // 画面内に表示されるようにスクロール
-            await tester.ensureVisible(densityOption);
+            await tester.ensureVisible(firstOption);
             await tester.pumpAndSettle();
             
-            await tester.tap(densityOption, warnIfMissed: false);
+            await tester.tap(firstOption, warnIfMissed: false);
             await tester.pumpAndSettle();
           }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/routing/app_router.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/widgets/optimized_text_widget.dart';
 import '../../../price_list/domain/entities/crypto_price.dart';
 import '../../../price_list/presentation/bloc/price_list_bloc.dart';
 import '../../../price_list/presentation/bloc/price_list_state.dart';
@@ -132,7 +133,7 @@ class _PriceDetailPageState extends State<PriceDetailPage> {
                       Center(
                         child: Column(
                           children: [
-                            Text(
+                            OptimizedTextWidget(
                               CurrencyFormatter.format(
                                 convertedPrice,
                                 currency: effectiveCurrency,
@@ -142,15 +143,21 @@ class _PriceDetailPageState extends State<PriceDetailPage> {
                                 fontSize: 48,
                                 fontWeight: FontWeight.bold,
                               ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              autoScale: true,
+                              minFontSize: 24.0,
                             ),
                             const SizedBox(height: 8),
-                            Text(
+                            OptimizedTextWidget(
                               CurrencyFormatter.formatChangePercent(price.change24h),
                               style: TextStyle(
                                 color: changeColor,
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
                               ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
@@ -175,7 +182,7 @@ class _PriceDetailPageState extends State<PriceDetailPage> {
                                 vertical: 12,
                               ),
                             ),
-                            child: Text(
+                            child: OptimizedTextWidget(
                               period,
                               style: TextStyle(
                                 color: isSelected ? Colors.white : Colors.grey,
@@ -183,6 +190,8 @@ class _PriceDetailPageState extends State<PriceDetailPage> {
                                 fontWeight:
                                     isSelected ? FontWeight.bold : FontWeight.normal,
                               ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           );
                         }).toList(),

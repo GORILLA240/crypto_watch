@@ -72,17 +72,19 @@ class CryptoIcon extends StatelessWidget {
   }
 
   /// エラー時のプレースホルダー（ティッカーシンボルの頭文字を表示）
+  /// 要件 15.3: アイコン取得失敗時にティッカーシンボルの頭文字を表示
+  /// 要件 15.4: 円形の枠内に表示
   Widget _buildErrorPlaceholder() {
     return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
         color: Colors.grey[800],
-        shape: BoxShape.circle,
+        shape: BoxShape.circle, // 円形の枠（要件 15.4）
       ),
       child: Center(
         child: Text(
-          symbol.isNotEmpty ? symbol[0].toUpperCase() : '?',
+          symbol.isNotEmpty ? symbol[0].toUpperCase() : '?', // 頭文字を表示（要件 15.3）
           style: TextStyle(
             color: Colors.white,
             fontSize: size * 0.5,

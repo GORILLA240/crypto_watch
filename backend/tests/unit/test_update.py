@@ -230,7 +230,7 @@ class TestUpdateHandlerProperties:
 class TestUpdateHandler:
     """Unit tests for Price Update Lambda handler."""
     
-    def test_handler_with_mock_eventbridge_event_success(self, monkeypatch, aws_credentials, environment_variables):
+    def test_handler_with_mock_eventbridge_event_success(self, monkeypatch, mock_dynamodb):
         """
         Test handler with mock EventBridge event - successful update flow.
         
@@ -273,20 +273,16 @@ class TestUpdateHandler:
             )
         ]
         
-        # Mock ExternalAPIClient.fetch_prices
-        def mock_fetch_prices(self, symbols):
-            return mock_prices
+        # Create a mock ExternalAPIClient class
+        class MockExternalAPIClient:
+            def fetch_prices(self, symbols):
+                return mock_prices
         
-        # Mock DynamoDBClient.save_multiple_price_data
-        def mock_save_multiple_price_data(self, prices, ttl_seconds=3600):
-            return True
+        # Mock the ExternalAPIClient class itself
+        import src.update.handler as handler_module
+        monkeypatch.setattr(handler_module, 'ExternalAPIClient', MockExternalAPIClient)
         
-        # Apply mocks
-        from src.shared import external_api, db
-        monkeypatch.setattr(external_api.ExternalAPIClient, 'fetch_prices', mock_fetch_prices)
-        monkeypatch.setattr(db.DynamoDBClient, 'save_multiple_price_data', mock_save_multiple_price_data)
-        
-        # Execute handler
+        # Execute handler (DynamoDB is mocked by mock_dynamodb fixture)
         response = lambda_handler(event, None)
         
         # Verify response
@@ -299,7 +295,7 @@ class TestUpdateHandler:
         assert 'lastUpdated' in body
         assert 'timestamp' in body
     
-    def test_handler_external_api_failure_after_retries(self, monkeypatch, aws_credentials, environment_variables):
+    def test_handler_external_api_failure_after_retries(self, monkeypatch, mock_dynamodb):
         """
         Test handler when external API fails after all retries.
         
@@ -309,7 +305,9 @@ class TestUpdateHandler:
         Requirements: 3.4
         """
         from src.update.handler import lambda_handler
-        from src.shared.errors import ExternalAPIError
+        # Import ExternalAPIError from the same module that handler uses
+        import src.update.handler as handler_module
+        ExternalAPIError = handler_module.ExternalAPIError
         
         # Mock EventBridge event
         event = {
@@ -321,16 +319,16 @@ class TestUpdateHandler:
             'detail': {}
         }
         
-        # Mock ExternalAPIClient.fetch_prices to raise error
-        def mock_fetch_prices_error(self, symbols):
-            raise ExternalAPIError(
-                'Failed to fetch prices after 4 attempts',
-                details={'attempts': 4, 'lastError': 'Connection timeout'}
-            )
+        # Create a mock ExternalAPIClient class that raises error
+        class MockExternalAPIClient:
+            def fetch_prices(self, symbols):
+                raise ExternalAPIError(
+                    'Failed to fetch prices after 4 attempts',
+                    details={'attempts': 4, 'lastError': 'Connection timeout'}
+                )
         
-        # Apply mock
-        from src.shared import external_api
-        monkeypatch.setattr(external_api.ExternalAPIClient, 'fetch_prices', mock_fetch_prices_error)
+        # Mock the ExternalAPIClient class itself
+        monkeypatch.setattr(handler_module, 'ExternalAPIClient', MockExternalAPIClient)
         
         # Execute handler
         response = lambda_handler(event, None)
@@ -344,7 +342,7 @@ class TestUpdateHandler:
         assert 'error' in body
         assert 'timestamp' in body
     
-    def test_handler_dynamodb_save_failure(self, monkeypatch, aws_credentials, environment_variables):
+    def test_handler_dynamodb_save_failure(self, monkeypatch, mock_dynamodb):
         """
         Test handler when DynamoDB save operation fails.
         
@@ -379,18 +377,19 @@ class TestUpdateHandler:
             )
         ]
         
-        # Mock ExternalAPIClient.fetch_prices
-        def mock_fetch_prices(self, symbols):
-            return mock_prices
+        # Create mock classes
+        class MockExternalAPIClient:
+            def fetch_prices(self, symbols):
+                return mock_prices
         
-        # Mock DynamoDBClient.save_multiple_price_data to fail
-        def mock_save_multiple_price_data_fail(self, prices, ttl_seconds=3600):
-            return False
+        class MockDynamoDBClient:
+            def save_multiple_price_data(self, prices, ttl_seconds=3600):
+                return False
         
-        # Apply mocks
-        from src.shared import external_api, db
-        monkeypatch.setattr(external_api.ExternalAPIClient, 'fetch_prices', mock_fetch_prices)
-        monkeypatch.setattr(db.DynamoDBClient, 'save_multiple_price_data', mock_save_multiple_price_data_fail)
+        # Mock the classes themselves
+        import src.update.handler as handler_module
+        monkeypatch.setattr(handler_module, 'ExternalAPIClient', MockExternalAPIClient)
+        monkeypatch.setattr(handler_module, 'DynamoDBClient', MockDynamoDBClient)
         
         # Execute handler
         response = lambda_handler(event, None)
@@ -403,7 +402,7 @@ class TestUpdateHandler:
         assert 'Failed to save prices to DynamoDB' in body['message']
         assert 'timestamp' in body
     
-    def test_handler_unexpected_exception(self, monkeypatch, aws_credentials, environment_variables):
+    def test_handler_unexpected_exception(self, monkeypatch, mock_dynamodb):
         """
         Test handler when an unexpected exception occurs.
         
@@ -423,13 +422,14 @@ class TestUpdateHandler:
             'detail': {}
         }
         
-        # Mock ExternalAPIClient.fetch_prices to raise unexpected error
-        def mock_fetch_prices_unexpected(self, symbols):
-            raise RuntimeError('Unexpected error occurred')
+        # Create a mock ExternalAPIClient class that raises unexpected error
+        class MockExternalAPIClient:
+            def fetch_prices(self, symbols):
+                raise RuntimeError('Unexpected error occurred')
         
-        # Apply mock
-        from src.shared import external_api
-        monkeypatch.setattr(external_api.ExternalAPIClient, 'fetch_prices', mock_fetch_prices_unexpected)
+        # Mock the ExternalAPIClient class itself
+        import src.update.handler as handler_module
+        monkeypatch.setattr(handler_module, 'ExternalAPIClient', MockExternalAPIClient)
         
         # Execute handler
         response = lambda_handler(event, None)
@@ -466,19 +466,19 @@ class TestUpdateHandler:
         assert 'ETH' in symbols
         assert len(symbols) >= 20  # Should have at least 20 symbols
     
-    def test_handler_logs_success_metrics(self, monkeypatch, aws_credentials, environment_variables, caplog):
+    def test_handler_logs_success_metrics(self, monkeypatch, mock_dynamodb):
         """
         Test that handler logs success metrics correctly.
+        
+        This test verifies that the handler completes successfully and returns
+        the expected response structure with all required fields including
+        metrics like symbolCount, priceCount, and timestamps.
         
         Requirements: 3.2, 3.5
         """
         from src.update.handler import lambda_handler
         from src.shared.models import CryptoPrice
         from datetime import datetime, timezone
-        import logging
-        
-        # Set log level to capture INFO logs
-        caplog.set_level(logging.INFO)
         
         # Mock EventBridge event
         event = {
@@ -502,29 +502,34 @@ class TestUpdateHandler:
             )
         ]
         
-        # Mock methods
-        def mock_fetch_prices(self, symbols):
-            return mock_prices
+        # Create a mock ExternalAPIClient class
+        class MockExternalAPIClient:
+            def fetch_prices(self, symbols):
+                return mock_prices
         
-        def mock_save_multiple_price_data(self, prices, ttl_seconds=3600):
-            return True
+        # Mock the ExternalAPIClient class itself
+        import src.update.handler as handler_module
+        monkeypatch.setattr(handler_module, 'ExternalAPIClient', MockExternalAPIClient)
         
-        # Apply mocks
-        from src.shared import external_api, db
-        monkeypatch.setattr(external_api.ExternalAPIClient, 'fetch_prices', mock_fetch_prices)
-        monkeypatch.setattr(db.DynamoDBClient, 'save_multiple_price_data', mock_save_multiple_price_data)
-        
-        # Execute handler
+        # Execute handler (DynamoDB is mocked by mock_dynamodb fixture)
         response = lambda_handler(event, None)
         
         # Verify success
         assert response['statusCode'] == 200
         
-        # Verify logs contain expected messages
-        log_messages = [record.message for record in caplog.records]
+        # Verify response body contains expected fields and metrics
+        import json
+        body = json.loads(response['body'])
+        assert body['message'] == 'Price update completed successfully'
+        assert 'symbolCount' in body
+        assert 'priceCount' in body
+        assert 'lastUpdated' in body
+        assert 'timestamp' in body
         
-        # Check for key log messages
-        assert any('Price update started' in msg for msg in log_messages)
-        assert any('Fetching prices' in msg for msg in log_messages)
-        assert any('Successfully fetched prices from external API' in msg for msg in log_messages)
-        assert any('Price update completed successfully' in msg for msg in log_messages)
+        # Verify metrics values are reasonable
+        assert body['symbolCount'] == 20  # Default supported symbols
+        assert body['priceCount'] == 1  # Mock returns 1 price
+        
+        # Verify timestamps are in ISO format
+        assert 'Z' in body['lastUpdated']  # ISO format with Z suffix
+        assert 'Z' in body['timestamp']

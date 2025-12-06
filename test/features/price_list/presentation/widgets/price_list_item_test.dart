@@ -45,10 +45,10 @@ void main() {
           expect(config.fontSize, equals(16.0));
           expect(config.padding, equals(12.0));
         } else if (density == DisplayDensity.maximum) {
-          expect(config.itemHeight, equals(48.0));
+          expect(config.itemHeight, equals(52.0)); // 最小タップ領域を確保
           expect(config.iconSize, equals(32.0));
           expect(config.fontSize, equals(14.0));
-          expect(config.padding, equals(8.0));
+          expect(config.padding, equals(12.0)); // 最小パディング要件
         }
       }
     });

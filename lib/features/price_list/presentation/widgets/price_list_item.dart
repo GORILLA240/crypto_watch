@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/display_density.dart';
 import '../../../../core/widgets/crypto_icon.dart';
+import '../../../../core/widgets/optimized_text_widget.dart';
 import '../../domain/entities/crypto_price.dart';
 
 /// 価格リストアイテムウィジェット
@@ -124,13 +125,14 @@ class PriceListItem extends StatelessWidget {
         child: Container(
           // 最小タップ領域を確保（44x44ポイント）
           constraints: const BoxConstraints(
-            minHeight: 44.0,
+            minHeight: 48.0, // 最小タップ領域を確保（要件 12.1）
             minWidth: 44.0,
           ),
           height: config.itemHeight,
+          // 最小パディング要件を満たす（要件 8.1, 8.2, 8.5）
           padding: EdgeInsets.symmetric(
-            horizontal: config.padding,
-            vertical: config.padding * 0.5,
+            horizontal: config.padding, // 12px以上
+            vertical: config.padding * 0.5 < 8.0 ? 8.0 : config.padding * 0.5, // 8px以上
           ),
           decoration: BoxDecoration(
             border: Border(
@@ -152,12 +154,13 @@ class PriceListItem extends StatelessWidget {
               SizedBox(width: config.padding * 0.5),
             ],
             
-            // 通貨アイコン（左端）
+            // 通貨アイコン（左端）（要件 15.1, 15.2, 15.6）
             CryptoIcon(
               symbol: price.symbol,
               size: config.iconSize,
             ),
-            SizedBox(width: config.padding * 0.75),
+            // アイコンとテキストの間隔を8ピクセル確保（要件 15.7）
+            const SizedBox(width: 8.0),
             
             // シンボルと名前
             Expanded(
@@ -166,32 +169,36 @@ class PriceListItem extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
+                  OptimizedTextWidget(
                     price.symbol,
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: config.fontSize,
                       fontWeight: FontWeight.bold,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   if (displayDensity == DisplayDensity.standard) ...[
                     const SizedBox(height: 4),
-                    Text(
+                    OptimizedTextWidget(
                       price.name,
                       style: TextStyle(
                         color: Colors.grey[400],
                         fontSize: config.fontSize * 0.75,
                       ),
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ] else if (displayDensity == DisplayDensity.compact) ...[
                     const SizedBox(height: 2),
-                    Text(
+                    OptimizedTextWidget(
                       price.name,
                       style: TextStyle(
                         color: Colors.grey[400],
                         fontSize: config.fontSize * 0.7,
                       ),
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
@@ -202,7 +209,7 @@ class PriceListItem extends StatelessWidget {
             // 価格
             Expanded(
               flex: 2,
-              child: Text(
+              child: OptimizedTextWidget(
                 CurrencyFormatter.format(
                   convertedPrice,
                   currency: effectiveCurrency,
@@ -213,6 +220,8 @@ class PriceListItem extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
                 textAlign: TextAlign.right,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             SizedBox(width: config.padding * 0.75),
@@ -229,7 +238,7 @@ class PriceListItem extends StatelessWidget {
                   color: changeColor.withOpacity(0.2),
                   borderRadius: const BorderRadius.all(Radius.circular(4)),
                 ),
-                child: Text(
+                child: OptimizedTextWidget(
                   CurrencyFormatter.formatChangePercent(price.change24h),
                   style: TextStyle(
                     color: changeColor,
@@ -237,6 +246,8 @@ class PriceListItem extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                   textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ),

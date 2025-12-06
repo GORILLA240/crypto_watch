@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/widgets/optimized_text_widget.dart';
 import '../../domain/entities/crypto_price.dart';
 
 /// シングルビュー用の大きな価格表示ウィジェット
@@ -23,26 +24,30 @@ class LargePriceDisplay extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           // シンボル
-          Text(
+          OptimizedTextWidget(
             price.symbol,
             style: const TextStyle(
               color: Colors.white,
               fontSize: 48,
               fontWeight: FontWeight.bold,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 8),
           // 名前
-          Text(
+          OptimizedTextWidget(
             price.name,
             style: TextStyle(
               color: Colors.grey[400],
               fontSize: 24,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 32),
           // 価格
-          Text(
+          OptimizedTextWidget(
             CurrencyFormatter.format(
               price.price,
               currency: displayCurrency,
@@ -52,6 +57,10 @@ class LargePriceDisplay extends StatelessWidget {
               fontSize: 64,
               fontWeight: FontWeight.bold,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            autoScale: true,
+            minFontSize: 32.0,
           ),
           const SizedBox(height: 16),
           // 変動率
@@ -64,23 +73,27 @@ class LargePriceDisplay extends StatelessWidget {
               color: changeColor.withOpacity(0.2),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Text(
+            child: OptimizedTextWidget(
               CurrencyFormatter.formatChangePercent(price.change24h),
               style: TextStyle(
                 color: changeColor,
                 fontSize: 36,
                 fontWeight: FontWeight.bold,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
           const SizedBox(height: 32),
           // 最終更新時刻
-          Text(
+          OptimizedTextWidget(
             '最終更新: ${_formatTime(price.lastUpdated)}',
             style: TextStyle(
               color: Colors.grey[600],
               fontSize: 16,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

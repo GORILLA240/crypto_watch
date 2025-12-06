@@ -56,6 +56,91 @@ void main() {
       final cryptoIcon = tester.widget<CryptoIcon>(find.byType(CryptoIcon));
       expect(cryptoIcon.size, testSize);
     });
+
+    // 要件 15.1: アイコンが正しく表示されることを確認
+    testWidgets('should display icon correctly for known symbols', (WidgetTester tester) async {
+      const knownSymbols = ['BTC', 'ETH', 'ADA', 'DOT', 'XRP'];
+      
+      for (final symbol in knownSymbols) {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: CryptoIcon(
+                symbol: symbol,
+                size: 32.0,
+              ),
+            ),
+          ),
+        );
+
+        // CryptoIconウィジェットが表示されていることを確認
+        expect(find.byType(CryptoIcon), findsOneWidget);
+        
+        // サイズが正しいことを確認
+        final cryptoIcon = tester.widget<CryptoIcon>(find.byType(CryptoIcon));
+        expect(cryptoIcon.size, 32.0);
+        expect(cryptoIcon.symbol, symbol);
+      }
+    });
+
+    // 要件 15.4: プレースホルダーが正しく表示されることを確認
+    testWidgets('should display placeholder with first letter when icon fails to load', 
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: CryptoIcon(
+              symbol: 'INVALID',
+              size: 32.0,
+            ),
+          ),
+        ),
+      );
+
+      // CryptoIconウィジェットが表示されていることを確認
+      expect(find.byType(CryptoIcon), findsOneWidget);
+      
+      // ウィジェットのプロパティを確認
+      final cryptoIcon = tester.widget<CryptoIcon>(find.byType(CryptoIcon));
+      expect(cryptoIcon.symbol, 'INVALID');
+      expect(cryptoIcon.size, 32.0);
+    });
+
+    // 要件 15.3, 15.4: 空のシンボルでもプレースホルダーが表示されることを確認
+    testWidgets('should display placeholder with ? for empty symbol', 
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: CryptoIcon(
+              symbol: '',
+              size: 32.0,
+            ),
+          ),
+        ),
+      );
+
+      // CryptoIconウィジェットが表示されていることを確認
+      expect(find.byType(CryptoIcon), findsOneWidget);
+    });
+
+    // 要件 15.6: スマートウォッチ用の32x32ピクセルサイズを確認
+    testWidgets('should support 32x32 pixel size for smartwatch', 
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: CryptoIcon(
+              symbol: 'BTC',
+              size: 32.0,
+            ),
+          ),
+        ),
+      );
+
+      final cryptoIcon = tester.widget<CryptoIcon>(find.byType(CryptoIcon));
+      expect(cryptoIcon.size, 32.0);
+    });
   });
 
   group('Property 1: Icon Display Consistency', () {

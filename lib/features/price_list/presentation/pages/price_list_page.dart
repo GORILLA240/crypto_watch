@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/routing/app_router.dart';
 import '../../../../core/utils/display_density.dart';
+import '../../../../core/utils/safe_area_calculator.dart';
 import '../../../settings/presentation/bloc/settings_bloc.dart';
 import '../../../settings/presentation/bloc/settings_state.dart';
 import '../../domain/entities/crypto_price.dart';
@@ -100,19 +101,25 @@ class _PriceListPageContent extends StatelessWidget {
             actions: [
               if (!isReorderMode) ...[
                 IconButton(
-                  icon: const Icon(Icons.refresh, color: Colors.white),
-                  onPressed: () {
-                    context.read<PriceListBloc>().add(const RefreshPricesEvent());
-                  },
-                ),
-                IconButton(
                   icon: const Icon(Icons.star, color: Colors.white),
+                  iconSize: 24,
+                  padding: const EdgeInsets.all(12),
+                  constraints: const BoxConstraints(
+                    minWidth: 44,
+                    minHeight: 44,
+                  ),
                   onPressed: () {
                     AppRouter.navigateTo(context, AppRoutes.favorites);
                   },
                 ),
                 IconButton(
                   icon: const Icon(Icons.notifications, color: Colors.white),
+                  iconSize: 24,
+                  padding: const EdgeInsets.all(12),
+                  constraints: const BoxConstraints(
+                    minWidth: 44,
+                    minHeight: 44,
+                  ),
                   onPressed: () {
                     AppRouter.navigateTo(context, AppRoutes.alerts);
                   },
@@ -123,29 +130,34 @@ class _PriceListPageContent extends StatelessWidget {
                   isReorderMode ? Icons.check : Icons.reorder,
                   color: Colors.white,
                 ),
+                iconSize: 24,
+                padding: const EdgeInsets.all(12),
+                constraints: const BoxConstraints(
+                  minWidth: 44,
+                  minHeight: 44,
+                ),
                 onPressed: () {
                   context.read<PriceListBloc>().add(const ToggleReorderModeEvent());
                 },
               ),
-              if (!isReorderMode)
-                IconButton(
-                  icon: const Icon(Icons.settings, color: Colors.white),
-                  onPressed: () {
-                    AppRouter.navigateTo(context, AppRoutes.settings);
-                  },
+              // 設定アイコンは常に表示（要件 3.1, 3.5）
+              IconButton(
+                icon: const Icon(Icons.settings, color: Colors.white),
+                iconSize: 24,
+                padding: const EdgeInsets.all(12),
+                constraints: const BoxConstraints(
+                  minWidth: 44,
+                  minHeight: 44,
                 ),
+                onPressed: () {
+                  AppRouter.navigateTo(context, AppRoutes.settings);
+                },
+              ),
             ],
           ),
             body: _buildBody(context, state),
-            floatingActionButton: isReorderMode
-                ? null
-                : FloatingActionButton(
-                    onPressed: () {
-                      context.read<PriceListBloc>().add(const RefreshPricesEvent());
-                    },
-                    backgroundColor: Colors.blue,
-                    child: const Icon(Icons.refresh, color: Colors.white),
-                  ),
+            // FloatingActionButtonを削除（要件 4.1）
+            // プルトゥリフレッシュで更新可能
           );
         },
       ),
@@ -153,6 +165,11 @@ class _PriceListPageContent extends StatelessWidget {
   }
 
   Widget _buildBody(BuildContext context, PriceListState state) {
+    // 画面サイズを取得して円形画面かどうかを判定（要件 5.1, 5.2）
+    final screenSize = MediaQuery.of(context).size;
+    final isCircular = screenSize.width == screenSize.height;
+    final safeInsets = SafeAreaCalculator.calculateSafeInsets(screenSize, isCircular);
+    
     return BlocBuilder<PriceListBloc, PriceListState>(
         builder: (context, state) {
           if (state is PriceListLoading) {
@@ -213,6 +230,10 @@ class _PriceListPageContent extends StatelessWidget {
                           itemCount: orderedPrices.length,
                           // パフォーマンス最適化: 固定高さを指定（要件 6.1）
                           itemExtent: DisplayDensityHelper.getConfig(displayDensity).itemHeight,
+                          // 円形画面対応: 安全領域を確保（要件 5.1, 5.2, 5.5）
+                          padding: EdgeInsets.symmetric(
+                            horizontal: safeInsets.left > 8.0 ? safeInsets.left : 8.0,
+                          ),
                           onReorder: (oldIndex, newIndex) {
                             context.read<PriceListBloc>().add(
                               ReorderPricesEvent(
@@ -247,6 +268,10 @@ class _PriceListPageContent extends StatelessWidget {
                           itemExtent: DisplayDensityHelper.getConfig(displayDensity).itemHeight,
                           // キャッシュ範囲を最適化
                           cacheExtent: DisplayDensityHelper.getConfig(displayDensity).itemHeight * 3,
+                          // 円形画面対応: 安全領域を確保（要件 5.1, 5.2, 5.5）
+                          padding: EdgeInsets.symmetric(
+                            horizontal: safeInsets.left > 8.0 ? safeInsets.left : 8.0,
+                          ),
                           itemBuilder: (context, index) {
                             final price = orderedPrices[index];
                             final isFavorite = favoriteSymbols.contains(price.symbol);
